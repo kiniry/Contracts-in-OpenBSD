@@ -1,0 +1,506 @@
+[memcmp_strlen_right]
+name = "memcmp_strlen_right"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 162
+begin = 2
+end = 225
+
+[wcslen_create_shift]
+name = "wcslen_create_shift"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 297
+begin = 2
+end = 263
+
+[JC_1]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 6
+end = 14
+
+[strlen_not_zero]
+name = "strlen_not_zero"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 117
+begin = 2
+end = 179
+
+[JC_2]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 18
+end = 35
+
+[memset_def]
+name = "memset_def"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 75
+begin = 2
+end = 238
+
+[JC_3]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 39
+end = 48
+
+[JC_4]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 39
+end = 48
+
+[JC_5]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 52
+end = 76
+
+[memchr_def]
+name = "memchr_def"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 61
+begin = 2
+end = 235
+
+[JC_6]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 52
+end = 76
+
+[JC_7]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 6
+end = 76
+
+[wcslen_shift]
+name = "wcslen_shift"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 285
+begin = 2
+end = 181
+
+[JC_8]
+file = "e:\\fr\\test\\sal\\7.jessie\\"
+line = 0
+begin = -1
+end = -1
+
+[JC_9]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 6
+end = 14
+
+[wcscmp_zero]
+name = "wcscmp_zero"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 310
+begin = 2
+end = 339
+
+[wcslen_at_null]
+name = "wcslen_at_null"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 263
+begin = 2
+end = 136
+
+[strlen_shift]
+name = "strlen_shift"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 135
+begin = 2
+end = 173
+
+[strlen_create_shift]
+name = "strlen_create_shift"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 147
+begin = 2
+end = 281
+
+[memcmp_strlen_shift_right]
+name = "memcmp_strlen_shift_right"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 178
+begin = 2
+end = 329
+
+[strcmp_zero]
+name = "strcmp_zero"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 199
+begin = 2
+end = 299
+
+[strchr_def]
+name = "strchr_def"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 230
+begin = 2
+end = 213
+
+[memcmp_zero]
+name = "memcmp_zero"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 47
+begin = 2
+end = 258
+
+[strlen_sup]
+name = "strlen_sup"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 129
+begin = 2
+end = 175
+
+[f5_safety]
+name = "Function f5"
+behavior = "Safety"
+file = "e:\\fr/test/sal/7.c"
+line = 15
+begin = 5
+end = 7
+
+[strlen_pos_or_null]
+name = "strlen_pos_or_null"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 89
+begin = 2
+end = 288
+
+[f5_ensures_zero]
+name = "Function f5"
+behavior = "Normal behavior `zero'"
+file = "e:\\fr/test/sal/7.c"
+line = 15
+begin = 5
+end = 7
+
+[JC_10]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 18
+end = 35
+
+[strlen_range]
+name = "strlen_range"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 104
+begin = 2
+end = 84
+
+[JC_11]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 39
+end = 48
+
+[strcmp_range]
+name = "strcmp_range"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 193
+begin = 2
+end = 178
+
+[f5_ensures_default]
+name = "Function f5"
+behavior = "Default behavior"
+file = "e:\\fr/test/sal/7.c"
+line = 15
+begin = 5
+end = 7
+
+[JC_12]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 39
+end = 48
+
+[JC_13]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 52
+end = 76
+
+[JC_14]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 52
+end = 76
+
+[JC_15]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 6
+end = 76
+
+[JC_16]
+file = "e:\\fr\\test\\sal\\7.jessie\\"
+line = 0
+begin = -1
+end = -1
+
+[memcmp_range]
+name = "memcmp_range"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 40
+begin = 2
+end = 215
+
+[JC_17]
+file = "e:\\fr\\test\\sal\\7.jessie\\"
+line = 0
+begin = -1
+end = -1
+
+[strlen_neg]
+name = "strlen_neg"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 98
+begin = 2
+end = 172
+
+[JC_18]
+file = "e:\\fr\\test\\sal\\7.jessie\\"
+line = 0
+begin = -1
+end = -1
+
+[JC_19]
+file = "e:\\fr\\test\\sal\\7.jessie\\"
+line = 0
+begin = -1
+end = -1
+
+[wcslen_pos_or_null]
+name = "wcslen_pos_or_null"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 243
+begin = 2
+end = 295
+
+[memcmp_strlen_left]
+name = "memcmp_strlen_left"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 155
+begin = 2
+end = 224
+
+[JC_20]
+file = "e:\\fr\\test\\sal\\7.jessie\\"
+line = 0
+begin = -1
+end = -1
+
+[JC_21]
+file = "e:\\fr\\test\\sal\\7.jessie\\"
+line = 0
+begin = -1
+end = -1
+
+[JC_22]
+file = "e:\\fr/test/sal/7.c"
+line = 15
+begin = 5
+end = 7
+
+[JC_23]
+file = "e:\\fr\\test\\sal\\7.jessie\\"
+line = 0
+begin = -1
+end = -1
+
+[strlen_create]
+name = "strlen_create"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 141
+begin = 2
+end = 201
+
+[JC_24]
+file = "e:\\fr/test/sal/7.c"
+line = 15
+begin = 5
+end = 7
+
+[wcsncmp_zero]
+name = "wcsncmp_zero"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 326
+begin = 2
+end = 385
+
+[wcslen_zero]
+name = "wcslen_zero"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 273
+begin = 2
+end = 194
+
+[JC_25]
+file = "e:\\fr/test/sal/7.c"
+line = 21
+begin = 14
+end = 68
+
+[JC_26]
+file = "e:\\fr/test/sal/7.c"
+line = 15
+begin = 5
+end = 7
+
+[JC_27]
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 371
+begin = 9
+end = 15
+
+[JC_28]
+file = "e:\\fr/test/sal/7.c"
+line = 21
+begin = 14
+end = 68
+
+[wcslen_create]
+name = "wcslen_create"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 291
+begin = 2
+end = 196
+
+[JC_29]
+file = "e:\\fr/test/sal/7.c"
+line = 15
+begin = 5
+end = 7
+
+[strlen_before_null]
+name = "strlen_before_null"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 108
+begin = 2
+end = 149
+
+[wcslen_sup]
+name = "wcslen_sup"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 279
+begin = 2
+end = 193
+
+[strlen_zero]
+name = "strlen_zero"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 123
+begin = 2
+end = 176
+
+[strncmp_zero]
+name = "strncmp_zero"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 214
+begin = 2
+end = 345
+
+[JC_30]
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 371
+begin = 9
+end = 15
+
+[JC_31]
+kind = ArithOverflow
+file = "e:\\fr/test/sal/7.c"
+line = 18
+begin = 5
+end = 6
+
+[JC_32]
+kind = PointerDeref
+file = "e:\\fr/test/sal/7.c"
+line = 18
+begin = 5
+end = 6
+
+[wcslen_not_zero]
+name = "wcslen_not_zero"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 267
+begin = 2
+end = 197
+
+[f5_ensures_normal]
+name = "Function f5"
+behavior = "Normal behavior `normal'"
+file = "e:\\fr/test/sal/7.c"
+line = 15
+begin = 5
+end = 7
+
+[wcslen_before_null]
+name = "wcslen_before_null"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 258
+begin = 2
+end = 167
+
+[memcmp_strlen_shift_left]
+name = "memcmp_strlen_shift_left"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 169
+begin = 2
+end = 328
+
+[wcslen_neg]
+name = "wcslen_neg"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 252
+begin = 2
+end = 169
+
+[strlen_at_null]
+name = "strlen_at_null"
+behavior = "axiom"
+file = "e:\\fr\\test\\sal\\7.jessie\\7.jc"
+line = 113
+begin = 2
+end = 116
+

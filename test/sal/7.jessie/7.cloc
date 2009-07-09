@@ -1,0 +1,121 @@
+[C_10]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 18
+end = 35
+
+[C_11]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 39
+end = 48
+
+[C_12]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 39
+end = 48
+
+[C_13]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 39
+end = 48
+
+[C_14]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 52
+end = 76
+
+[C_15]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 52
+end = 76
+
+[C_16]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 52
+end = 76
+
+[C_17]
+file = "e:\\"
+line = 0
+begin = -1
+end = -1
+
+[C_18]
+file = "e:\\"
+line = 0
+begin = -1
+end = -1
+
+[C_19]
+file = "e:\\fr/test/sal/7.c"
+line = 21
+begin = 14
+end = 68
+
+[C_1]
+file = "e:\\fr/test/sal/7.c"
+line = 18
+begin = 5
+end = 6
+
+[C_2]
+file = "e:\\fr/test/sal/7.c"
+line = 18
+begin = 5
+end = 6
+
+[C_3]
+file = "e:\\fr/test/sal/7.c"
+line = 18
+begin = 5
+end = 6
+
+[C_4]
+file = "e:\\fr/test/sal/7.c"
+line = 18
+begin = 5
+end = 6
+
+[C_5]
+file = "e:\\fr/test/sal/7.c"
+line = 18
+begin = 5
+end = 6
+
+[C_6]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 6
+end = 76
+
+[C_7]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 6
+end = 48
+
+[f5]
+name = "Function f5"
+file = "e:\\fr/test/sal/7.c"
+line = 15
+begin = 5
+end = 7
+
+[C_8]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 6
+end = 35
+
+[C_9]
+file = "e:\\fr/test/sal/7.c"
+line = 7
+begin = 6
+end = 14
+

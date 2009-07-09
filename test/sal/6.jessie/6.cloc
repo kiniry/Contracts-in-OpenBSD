@@ -1,0 +1,61 @@
+[C_1]
+file = "e:\\fr/test/sal/6.c"
+line = 21
+begin = 6
+end = 8
+
+[C_2]
+file = "e:\\fr/test/sal/6.c"
+line = 21
+begin = 6
+end = 8
+
+[C_3]
+file = "e:\\fr/test/sal/6.c"
+line = 17
+begin = 6
+end = 8
+
+[C_4]
+file = "e:\\fr/test/sal/6.c"
+line = 17
+begin = 6
+end = 8
+
+[C_5]
+file = "e:\\fr/test/sal/6.c"
+line = 15
+begin = 4
+end = 6
+
+[C_6]
+file = "e:\\fr/test/sal/6.c"
+line = 8
+begin = 13
+end = 23
+
+[C_7]
+file = "e:\\fr/test/sal/6.c"
+line = 8
+begin = 13
+end = 23
+
+[C_8]
+file = "e:\\fr/test/sal/6.c"
+line = 8
+begin = 13
+end = 23
+
+[f6]
+name = "Function f6"
+file = "e:\\fr/test/sal/6.c"
+line = 11
+begin = 5
+end = 7
+
+[C_9]
+file = "e:\\"
+line = 0
+begin = -1
+end = -1
+
