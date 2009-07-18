@@ -5,10 +5,10 @@
 /*@ requires
   @   size > 0 && size < INT_MAX && \valid(t) && \valid_range(t,0,size-1);
   @ behavior zero:
-  @   assumes (t == NULL);
+  @   assumes (t == NULL) || (size <= 0);
   @   assigns \nothing;
   @ behavior normal:
-  @   assumes \valid(t);
+  @   assumes \valid(t) && (size > 0);
   @   assigns t[0..size-1];
   @ disjoint behaviors zero, normal; // not strictly necessary but for completeness. BTW this is a comment for annotation.
 */
