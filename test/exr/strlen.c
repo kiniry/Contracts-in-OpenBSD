@@ -1,31 +1,30 @@
 // string length
 // not finalized.
-/*@
-  @ inductive null_terminated {L}(char *s){
-  @   case empty : \forall char *p; (\valid(p) && *p == '\0') => null_terminated(p);
-  @   case non_empty : \forall char *p2; (\valid(p2) && \valid(p2 + 1) && null_terminated(p2 + 1)) ==> null_terminated (p2) ;
-  @}
-*/
+
+//#pragma JessieIntegerModel(modulo) //temp
 
 /*@
 requires \valid(s);
-requires null_terminated(s); // @terminates null_terminated(s);
+requires \exists int k; 0<=k<=INT_MAX && \valid_range(s, 0, k) && s[k] == '\0';
+terminates \exists int k; 0<=k<=INT_MAX && \valid_range(s, 0, k) && s[k] == '\0';
 assigns \nothing;
 ensures \result >= 0;
-ensures s[\result] == '\0';
-
+ensures \exists int k; 0<=k<=INT_MAX && \valid_range(s, 0, k) && s[k] == '\0' ==> \result == k;
 */
  unsigned int strlen (const char *s)
  {
      unsigned int n = 0;
-     //@ loop invariant 0<= n && \valid(s);
-     while ( *s != '\0')
+     char *p = s;
+     /*@ loop invariant 0<= n < INT_MAX && \valid(p);
+         loop invariant \forall unsigned int k; 0 <= k && k < n && s[k] != '\0';
+       */
+     while ( *p != '\0')
      {
     	 //@assert n < INT_MAX;
          n++;
-         s++;
-         //@assert \valid(s);
+         p++;
      }
+     //@ assert *p == '\0';
      return n;
  }
 

@@ -1,38 +1,31 @@
 // strchr - find chr in string.
 // not finalized.
 
-#pragma JessieIntegerModel(modulo) //temp
+//#pragma JessieIntegerModel(modulo) //temp
 
 /*@
-   requires sizeMax > 0 && sizeMax < INT_MAX;
-   requires \valid_range(s, 0, sizeMax-1);
-   requires \exists int k;0 <= k < sizeMax && s[k] == '\0'; // null_terminated.
+   requires \valid(s);
+   requires \exists int k; 0<=k<=INT_MAX && \valid_range(s, 0, k) && s[k] == '\0';
+   terminates \exists int k; 0<=k<=INT_MAX && \valid_range(s, 0, k) && s[k] == '\0';
    assigns \nothing;
-
    behavior found:
-	   ensures \valid(\result) => *\result == c;
+       assumes \exists int k; 0 <= k <= INT_MAX && \valid(s+k) && s[k] == c;
+	   ensures \valid(\result) && *\result== c;
    behavior not_found:
-       ensures \result == NULL => \forall int k; 0 <= k < sizeMax && \valid(s+k) && s[k] != c;
+	   assumes \forall int k; 0 <= k <= INT_MAX && \valid(s+k) && s[k] != c;
+       ensures \result == NULL;
    disjoint behaviors found, not_found;
  */
- char * strchr(const char *s, unsigned int sizeMax, char c)
+ char * strchr(const char *s, char c)
  {
-	 unsigned int i = 0;
-	 char *p = NULL;
-
-	 /*@ loop invariant 0 <= i <= sizeMax;
-	     loop invariant \valid(s);
-	     loop invariant (p == NULL) || (\valid(p) && *p == c);
+	 /*@ loop invariant \valid(s);
+	  * for not_found : loop invariant \at(*s, Pre) != c && \at(*s, Pre) != '\0';
 	 */
-	 while (i < sizeMax && *s != '\0') {
-		 if (c == *s)
-		 {
-			 p = s;
-			 break;
-		 }
-		 i++;
+	 while (s && *s != '\0' && *s != c) {
+		 //@ invariant \at(*s, Here) != c && \at(*s, Here) != '\0';
 		 s++;
 	 }
-
-	 return p;
+	 if (s && *s == c)
+		 return s;
+	 return NULL;
  }
