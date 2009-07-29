@@ -1,0 +1,1 @@
+for <behavior_name> :  loop invariant <proposition> ;
