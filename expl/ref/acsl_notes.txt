@@ -1,0 +1,596 @@
+Option jessie-int-model is used to select the way Jessie manages integers. 
+
+Three options: 
+
+-exact: abstract integer are used (no limits)
+-modulo: such as C's int type, integer used in specification are defined on 32 bits.
+-bounded: describes a modulo integer arithmetic (or saturating or trapping or whatever 2-complement arithmetic you can imagine) with additional POs proving that the values do not overflow.
+Option exact removes the conversion predicates required to convert integer to C's int. This makes the proof easier. However, the behavior is not correct if an overflow can occur. 
+
+
+--------------------------------------------------------------------------------------------------
+
+I just coded some lightweight annotations for those who use Frama-C with the
+Jessie plugin to perform deductive verification. Say you want to express
+that some function parameters and returns are non-null.
+
+First define a non-null predicate:
+
+//@ predicate non_null(void *p) = p != 0;
+
+Then, define a declspec of the same name, usually through a macro:
+
+#define NON_NULL __declspec(non_null)
+
+Finally, decorate function parameters and returns with the appropriate
+declspec! The corresponding proposition gets added to the function
+precondition for parameters, and to the function postcondition for returns:
+
+char*NON_NULL f(char *NON_NULL x, char *y) {
+  //@ assert x != 0;
+  //@ assert y != 0;
+  return x;
+}
+
+In the example above, 2 of 3 VC are automatically proved. The last one is
+not provable of course (y != 0).
+
+A quick follow-up on the same subject. I added support for declspec that
+express properties of function parameters and returns with additional
+arguments. E.g. one can express that integer parameters and returns fit in a
+specific range like that:
+
+//@ predicate range(integer i, integer lb, integer rb) = lb <= i <= rb;
+
+#define RANGE(a,b) __declspec(range(a,b))
+
+int RANGE(-5,15) f (int RANGE(0,5) x, int RANGE(-5,10) y) {
+  //@ assert 0 <= x <= 5;
+  //@ assert -5 <= y <= 10;
+  return x + y;
+}
+
+For those constructs that are not predicates, Jessie prolog defines specific
+declspec:
+
+#define FRAMA_C_PTR __declspec(valid)
+#define FRAMA_C_ARRAY(n) __declspec(valid_range(0,n))
+
+and an annotation for strings that could be defined in user code but is
+better defined in the prolog because it is useful for everybody:
+
+#define FRAMA_C_STRING __declspec(valid_string)
+
+So that one can specify a function like this:
+
+char *
+FRAMA_C_ARRAY(n-1)
+FRAMA_C_STRING
+my_string_copy (char *FRAMA_C_ARRAY(n-1) dest,
+        const char *FRAMA_C_STRING src,
+        unsigned n)
+{
+  // ...
+  return dest;
+}
+
+I personally like this way of annotating functions. Please let me know if
+you have ideas to improve on this.
+
+----------------------------------------------------------
+There is indeed a solution if you only intend to work with the Jessie
+plugin. Since this plugin works with a typed memory model by default (when
+there are no pointer casts and unions), you may express separation with the
+following predicate:
+
+/*@ predicate disjoint_arrays(char *a, char *b, integer i) =
+  @   \forall integer k1, k2;
+  @      0 <= k1 < i && 0 <= k2 < i ==> a + k1 != b + k2;
+  @*/
+
+------------------------------------------------------------
+One advice is to use "integer" instead of ints in your annotations:
+
+ensures  \forall integer k; 0 <= k < n ==> a[k] == b[k];
+
+---------------------------------------------------------
+Old does not mean anything in loop invariants. You have to use Pre:
+a[m] == \at(b[m],Pre)
+----------------------------------------------------------
+To prove instead that the value of [a] after copying is the same as the
+value of [b] before, you need to strengthen the loop invariant like follows,
+to assess that all of [b] does not change during the loop.
+
+/*@ requires 0 < n;
+  @ requires \valid_range(a, 0, n-1) && \valid_range(b, 0, n-1);
+  @ requires disjoint_arrays(a, b, n);
+  @ ensures  \forall int k; 0 <= k < n ==> a[k] == \at(b[k],Pre);
+  @*/
+void array_cpy(int* a, int n, int* b)
+{
+   /*@ loop invariant 0 <= i <= n;
+     @ loop invariant \forall int m; 0 <= m < n  ==> b[m] == \at(b[m],Pre);
+     @ loop invariant \forall int m; 0 <= m < i  ==> a[m] == b[m];
+     @*/
+   for (int i = 0; i < n; i++)
+     a[i] = b[i];
+}
+
+With these annotations, Z3, ALt-Ergo and Simplify still prove your function
+(not Yices).
+------------------------------------------------------------
+
+
+
+
+- \separated(a,b) indicates that the locations pointed to by a and b
+(both seen as pointer to int) do not overlap.
+
+- \separated(a[i],b[j]) is ill-formed: \separated takes addresses as
+arguments not the values themselves. You should use
+\separated(a+i,b+j).
+
+Note that the latter is equivalent to the following precondition which
+uses (indefinite) ranges of addresses: 
+//@ requires \separated(a+(..),b+(..));
+
+-------------------------------------------------------
+
+/*@ predicate disjoint_arrays(int* a, int* b, integer i) =
+     \forall integer k1, k2; 
+        0 <= k1 < i && 0 <= k2 < i ==> a + k1 != b + k2;
+*/
+------------------------------------------------------
+
+//@ ghost int* a = first;
+ //@ ghost int* b = result;
+ //@ ghost int length = last-first;
+
+    /*@
+     loop invariant a <= first <= last;
+     loop invariant b <= result <= b+length;     
+     loop invariant \forall integer k; 0 <= k < first-a ==> result[k] == first[k];
+    */
+  while (first!=last) *result++ = *first++;
+  return result;
+
+There were two problems with yours:
+1) it was not strong enough to be inductive, because you did not relate the
+value of result and first during looping, this is the part [result - b ==
+first - a]
+2) there was an error in the last line, you meant to use the unmodified
+ghost versions of your pointers!
+
+
+/*@
+     loop invariant a <= first <= last;
+     loop invariant result - b == first - a;
+     loop invariant b <= result <= b+length;
+     loop invariant \forall integer k; 0 <= k < first-a ==> a[k] == b[k];
+    */
+
+
+
+-----------------------------------------------------------
+
+
+Unfortunately, this feature is not expected to be available in the next 
+release. Indeed neither \lambda nor \sum.
+
+------------------------------------------------------------
+
+> /*@
+>  requires 0 < n;
+>  requires \valid_range(a, 0, n-1);
+>  assigns  a[0..n - 1];
+>  ensures  \forall integer i; 0 <= i < n ==> a[i] == 0;
+> */
+> void array_zero(int* a, int n)
+> {
+>
+>     /*@
+>    loop invariant 0 <= i <= n;
+>    loop invariant \forall integer k; 0 <= k < i ==> a[k] == 0;
+>    loop assigns i, a[0..i-1];
+>     */
+>     for (int i = 0; i < n; i++)
+>     {
+>         a[i] = 0;
+>     }
+> }
+> If I put a assings clause in the function contract and use  a loop in the
+> function I cannot hold the postcondition. I think it might has something to
+> to with preserving it like a loop invariant. In the 1_3 manual I discovered
+> the loop assigns but I don't know how to use it. (what is the upper bound
+> and will I need to use quantifiers?)
+>
+
+ Your example is correct. The problem is that the Jessie plugin currently
+does not support loop assigns, but it is on top of our todo list. In
+particular, i-1 is the proper upper bound, indeed at loop entry you have
+assigned nothing, which can be written a[0..-1] and after each loop you
+increase this bound. Hopefully you can verify this example with the next
+release!
+
+-------------------------------------------------------------------
+
+The 1_3 ACSL manual refers to nb_occ, a function that counts occurrences of a value in an array.
+
+----------------------------------------------------------------------
+
+What you need is a bit more complex, it requires that a predicate
+takes into two states, so that some of its sub-terms are evaluated in one
+state, and others subterms in another state.
+
+There is a construct in Frama-C that should be already supported by the
+Jessie plugin in the Helium release, to express such states:
+
+/*@ predicate is_permutation{S1,S2}(int *a, int *b, int s) =
+  @   \forall integer k;
+  @     0 <= k < s ==> \at(a[k],S1) == \at(a[k],S2);
+  @*/
+
+/*@ ensures is_permutation{Here,Old}(a,a,s);
+  @ */
+void permut(int *a, int s);
+
+
+-------------------------------------------------------------------------
+
+> /*@
+>   @logic integer min(integer a, integer b) =
+>   @  (a < b) ? a : b;
+>   @
+> */
+>
+> /*@
+>  requires last1 > first1;
+>  requires \valid_range (first1, 0, last1-first1-1);
+>  requires \valid_range (first2, 0, last2-first2-1);
+>  behavior is_less:
+>   ensures \result == \true ==> \exists integer k2; \forall integer k1;
+>    0 <= k1 <= k2 < min(last1-first1, last2-first2)
+>    ==> ((first1[k2] < first2[k2]) ^^ (last1-first1 < last2-first2)) &&
+> first1[k1] <= first2[k1];
+>
+>  behavior is_not_less:
+>  ensures \result == \false ==> \forall integer k2; \forall integer k1;
+>    0 <= k1 <= k2 < min(last1-first1, last2-first2)
+>    ==> first1[k2] >= first2[k2] || first1[k1] >= first2[k1];
+>
+> */
+> int lexicographical_compare_int_array (int* first1, int* last1, int*
+> first2, int* last2 )
+
+
+--------------------------------------------------------------------------
+
+when you write
+
+@ //ensures \result == ((pcond3(pcond1(x),pcond2(y)))?1:0);
+
+you assume that pcond1, pcond2 and pcond3 are logic functions that return a
+boolean. This is not the case. In your example, these are predicates, whose
+application is a proposition that cannot be used inside terms. Please refer
+to the grammar of terms and propositions in ACSL reference (section 2.2),
+you will see a proposition cannnot occur as an argument of an application,
+and it can occur inside a proposition (a?b:c) only when b and c are
+themselves propositions.
+
+---------------------------------------------------------------------------
+
+Existing solutions for recursively defined logic functions were not
+satisfying:
+
+- recursive logic function may very easily be ill-defined, in particular
+when they should be defined only for some arguments, and left unspecified
+for others (e.g., the length of a list), leading to inconsistencies.
+For example, the following "natural" definition is wrong:
+
+//@ logic integer list_length(List *x) = (x == NULL) ? 0 :
+list_length(x->next) + 1;
+
+By examining the case where x == x->next, it is possible to deduce that 0 ==
+1.
+
+- reads clauses are likewise easily ill-written, leading to other
+inconsistencies with axioms defining the function.
+For example, the following reads clause is wrong:
+
+//@ logic integer list_length(List *x) read x, x->next;
+
+This does not take into account x->next->next, etc.
+
+Our solution is to group together the declaration of a logic function
+together with axioms that define it, in a axiomatic. Then, the reads clause
+is automatically inferred from axioms. This is what is done for NbOcc
+axiomatic, around nb_occ logic function. The same is true for predicates, or
+various logic functions and predicates defined by a set of axioms.
+
+-------------------------------------------------------------------------------
+
+> Yet my problem remains, I could not easily do it on my own, unless I know
+> why and how it does what I intend to do.
+>
+
+Except from the missing reads clause that is now inferred, the new axiomatic
+is similar to what was done previously for axiomatized logic functions and
+predicates: you declare function or predicate, and you define them through
+axioms.
+
+
+> Is there a relation between axiom-names and evaluation?
+>
+
+Axioms are just true formulas given to automatic provers to use in any way
+they like. Or in proof assistants, but then you must tell how to instanciate
+them.
+
+
+> Where is it expressed, that an array has to be processed?
+>
+
+Axioms are expressed in a way that is suitable to facilitate the proof, but
+they do not express anything about execution.
+
+
+--------------------------------------------------------------------------
+
+We corrected the Jessie plugin to remove the regression you observed, but
+this requires stating when pointers belong to the same block. Indeed,
+equality of pointer values in C is not the same as equality of the logic
+pointer entities in our memory model. Thus, in the example you showed us,
+stating that [first <= last] in the precondition does not guarantee that
+first and last belong to the same block, which is later on needed to prove
+the loop invariant. Thus,
+you must state in the precondition and the loop invariant that some pointers
+belong to the same allocated block of memory. There is no predefined
+construct in ACSL to state this, so we translate equality of base addresses
+in Jessie to express precisely that, although it would be better expressed
+with a special construct in the future.
+
+Notice that stating equality of pointers in annotations implies they belong
+to the same block (which is not the case for inequalities), maybe this can
+save you some annotations. Unfortunately, this change is necessary for
+correction.
+
+
+--------------------------------------------------------------------
+
+You need to express that [copy] may modify the content of the array
+pointed-to by dest, which can be as simple as
+//@ assigns dest[..];
+or with more precision
+//@ assigns dest[0..last-first];
+
+
+--------------------------------------------------------------
+
+Loop assigns is not supported yet in the Jessie plugin, a warning is now
+issued.
+To better answer your question, we need precisions, such as:
+- what VC exactly are not proved
+- which ATP you use
+
+In your case, you are directly using quantifiers, for which is not easy to
+get automatic proofs. The best way is to hide quantifiers by defining
+equivalent predicates and logic functions with appropriate axioms, that
+should be expressed in a way that facilitates the proof by ATP. This last
+thing is probably the hardest part, and needs most of all experiments on the
+specific programs you want to prove, with the provers you want to use. To
+help the prood go through, it is usually a good idea to add logical
+assertions (//@ assert ...) that direct the proof, and help you understand
+which parts of a bigger formula are not proved.
+
+
+-------------------------------------------------------------------
+
+> void out_char(char c) 
+> {
+> int col = 0;
+> //@ global invariant I : 0 <= col <= 79;
+> col++;
+> if (col >= 80) col = 0;
+> }
+
+There is indeed a mistake in acsl-implementation.pdf. In the current
+implementation, global invariants can only be specified as global
+specification, not inside a block of code. In addition, such a global
+invariant could only refer to local variables that are static(1), as is
+the case in the example 2.42, but not in the code above. There would be
+little point in stating a "global invariant" that would depend on local
+variables whose existence is limited to a function execution
+(especially for a weak global invariant which is checked only at the
+entrance and exit of functions). There is currently no way to express
+an invariant on local variables that has to be verified at each point
+statement (short of writing assert annotations everywhere).
+
+---------------------------------------------------------------
+
+>What is then the value of
+>	\base_addr(&(x[2].b[1])) ?
+>Is it
+>	&(x[2].b[0]) ( which I think is equal to x+2)
+>or
+>	&(x[0].b[0]) (which I think is equal to x)
+>?
+
+It is the latter. &(x[2].b[0]) and &(x[0].b[0]) are both
+offsets of the same base address.
+
+Each plug-in may, however, choose whether to allow to go from 
+&(x[0].b[0]) to &(x[2].b[0]) using the arithmetics
+of pointers to int (a plug-in may even let the user toggle
+between both modes with an option). If a plug-in chooses
+to disallow these kinds of "overflows", it will generate
+an unprovable verification condition for a program that
+purposefully accesses one of these addresses as an offset
+from the other, so the soundness of the framework is
+not in question here.
+
+Consider for instance the (perhaps unsufficiently documented)
+-unsafe-arrays option for the value analysis.
+With this option enabled, the memory access x[0].b[10]
+falls at x[2].b[2]. Without it, it is guaranteed not to fall
+outside of x[0], but it generates a condition verification
+equivalent to "false" (here, something like "10 < 4").
+
+-----------------------------------------------------------
+
+
+This may be an useful way to look at "assumes", depending on
+your background:
+Classical Hoare logic does not have "assumes", only one precondition
+and one post-condition. But, when you try to use it, you end up very
+often writing post-conditions of the form
+"if (some condition that depends only on the pre-state) then something"
+
+The "assumes" clause is a convenient way to format these conditions.
+It saves you the writing of (and the risk of forgetting, introducing a  
+bug in
+your specification) all the \old(...) modifiers since the syntax makes  
+it
+clear that 'assumes' apply to the pre-state, and since these conditions
+often have additional properties, such as being exclusive or  
+complementary,
+it gives the opportunity to express this  concisely.
+
+
+---------------------------------------------------------------
+
+In principle you should write
+
+   assigns  dest[0..\at(\result,Post)]
+
+because by default, assigns clauses are related to the pre-state.
+
+BUT, I'm afraid that this feature is not yet implemented in the Jessie 
+plugin, which is what you probably want...
+
+The only workaround I see for the moment is to give an over-approximated 
+assigns clause and a ensures clauses saying explicitly that cells for 
+indexes outside that range did not change:
+
+/*@ assigns dest[..]
+   @ ensures
+   @ \forall integer k;
+   @    ! ( 0 <= k <= \result) ==> dest[k] == \old(dest[k]);
+   @*/
+
+
+-------------------------------------------------------------------
+
+> I would like to know, how the implication in the ACSL must be interpreted.
+> 
+> Is it a logical implication, that returns a boolean, in each case?
+> 
+> Or is it like a conditional evaluation, where the right-hand-side is only evaluated when the left-hand-side returns true?
+> 
+
+As far as I understand the question, implication is logical implication.
+
+The other alternative, "conditional evaluation", does not make sense to 
+me since terms and propositions given as annotations are not meant to be 
+"executed".
+
+My guess is that you are thinking about annotations like
+
+//@ assert p != NULL ==> *p == ...
+
+where the meaning of *p on the right is undefined if the left part is 
+not true.
+
+Such "undefinedness" issues are discussed in section 2.2.2 of ACSL 
+document (Logic Expressions/Semantics) and for further info I recommend 
+reading the work of P. Chalin cited there.
+
+---------------------------------------------------------------------------
+
+I should also point you to existing methods to infer loop invariants
+automatically in presence of string manipulations in the Jessie plug-in.
+See http://www.lri.fr/~moy/minix3.html
+and the pointers there for more information.
+If you want to play with this,
+you need to have the APRON library installed
+(http://apron.cri.ensmp.fr/library/). APRON in turn depends
+on libraries such as GMP and MPFR. Hopefully your distribution
+would contain packages for all these necessary libraries.
+
+You may also be interested in reading this:
+http://penjili.org/papers/AllamigeonGodardHymansSAS06.pdf
+
+
+----------------------------------------------------------------------------
+
+> Another question about something I noticed while writing this example.
+> The statement at line 20 was originally written like this:
+>
+> if(bar != strcpy(bar, "foobar"))
+> 	return -1;
+>
+> But it makes frama-c think this condition is always true and so all  
+> code
+> after this statement is considered as dead code. Since strcpy in most
+> case (when everything goes right) will in fact return 'bar', I don't  
+> see
+> what is wrong here.
+
+
+This is because your project did not include the code for
+function strcpy. Since it is a library function whose return
+type is a pointer, it was assumed to return a pointer to a
+location without aliases to other variables in the program.
+In these conditions bar!=strcpy(bar, "foobar")
+is always true.
+
+You can fix this by providing the code of the actual
+function strcpy that will be executed when your program runs,
+or a simplified equivalent version. Some common
+functions are provided in share/libc.{c,h}.
+
+Note the case of the first definition of memcpy:
+void* memcpy(void* region1, const void* region2, size_t n)
+{
+   if (n > 0)
+     Frama_C_memcpy(region1, region2, n);
+   return region1;
+}
+
+This function calls a built-in function, which allows
+to make any necessary transformation on the interpreter's
+state, in a simpler way than making the analyzer look at one
+possible implementation. Our built-ins are not perfect yet,
+which is why an alternative is proposed for memcpy, but what I
+am suggesting is that you look at this mechanism first.
+
+
+-------------------------------------------------------------------
+
+Generally speaking, in
+
+//@ invariant I;
+while (true) {
+    s1;
+    if (c) break;
+    s2;
+}
+
+I is asked to be true when entering the loop, and being preserved by the
+sequence
+    s1;
+    if (c) break;
+    s2;
+
+When the sequence
+    s1;
+    if (c) break;
+
+exits the loop, I may be made wrong if there are side-effects in s1 (or
+in c!)
+
+In other words: loop invariant hold right after termination of a loop
+only if there are no side-effects between the loop start and the exit.
+But otherwise not necessarily... This is why in textbooks you usually
+prefer to assume side-effect free loop conditions...
+----------------------------------------------------------------------
+

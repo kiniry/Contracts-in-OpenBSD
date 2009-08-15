@@ -1,0 +1,389 @@
+
+The Frama-C development team is proud to announce the availability
+of Frama-C, the framework for the development of collaborating
+static analyzers for the C language. Many analyzers are provided in the
+distribution, including a value analysis plug-in that provides variation
+domains for the variables of the program, and Jessie, a plug-in
+for computing Hoare style weakest preconditions.
+
+Frama-C is Open Source software. It is written in Ocaml and relies
+on the CIL (C Intermediate Language) library.
+
+Additional information, source code and documentation for Frama-C
+are available now at http://frama-c.cea.fr/. Binary distributions for
+various popular environments will be forthcoming.
+
+For the Frama-C development team
+
+
+------------------------------------------------------------------------
+
+Since Jessie is a bridge between
+Frama-C and Why
+
+----------------------------------------
+
+Yes, having two versions of why hanging around is an issue. That said,
+the Frama-C documentation is a bit misleading. In fact, the jessie
+plugin is heavily dependent upon why and requires a precise version of
+why to work, but if the two release cycles are synchronized enough (as
+this was the case for frama-c-20080502 and why-2.13), this should not be
+an issue. The godi[1] package (apps-frama-c) is by default built
+against the jc library provided by apps-why and not the local one.
+
+---------------------------------------------
+
+Regarding Caduceus and Frama-C/Jessie, pointer arithmetic is supported
+but pointer casts are not (casts between primitive types such as int,
+long, float, etc. are supported, though).
+To complement Jean-Christophe's answer, it depends what you mean
+by "Frama-C/Jessie". Frama-C is an analysis framework where each
+plug-in (Jessie is one such plug-in) is free to define its own limitations
+on the subset of C that it handles. Frama-c itself has very few
+intrinsic limitations, and for instance, the value analysis
+that constitutes one of the many other plug-ins in Frama-C
+allows heterogenous pointer casts, such as casts from pointer to
+structure to pointer to basic type, and arbitrary pointer arithmetics.
+
+The theoretical bases for the sound collaboration of plug-ins
+with different limitations (for instance, different memory models)
+will be laid out in the future, but until this time,
+Frama-C can already be used to
+analyze programs that fit within the intersection of the
+subsets of C accepted by all the plug-ins used for the analysis.
+
+
+-----------------------------------------------
+
+Your assessment of what Frama-C currently provides,
+and what it should provide in terms of fine-grained 
+collaboration between plug-ins, is perfectly correct.
+
+The bas news is that the fine-grained collaboration between
+plug-ins is not done yet. The good news is that we will not
+consider the Frama-C project completed until it is done.
+This will indeed be one of the key features
+of Frama-C Fe (or thereabout) :)
+
+------------------------------------------------------
+
+1) What is the difference between Caduceus annotation language and ACSL?
+
+ACSL is strongly inspired from Caduceus annotation language, which is itself
+strongly inspired from JML. ACSL is meant to be independent from a specific
+tool, technique or memory model, while Caduceus annotation language is
+strongly tied to deductive verification and the component-as-array memory
+model (aka Burstall-Bornat memory model), where pointer casts and unions are
+not allowed. ACSL only relies on what the C standard guarantees, and its aim
+is to allow expressing any safety property (not progress properties) on a C
+program. E.g., it is possible to have casts in ACSL annotations, sets of
+terms, sets expressed in comprehension notation, etc.
+
+2) What is the difference between Frama-C and Caduceus?
+
+Frama-C is a platform that allows many techniques to be applied to analyse a
+C program. We are increasingly combining analyses (plugins), so that in the
+end you should be able to prove many properties by abstract interpretation,
+slice the program for the remaining properties and prove them by deductive
+verification inside Why, all automatically. Frama-C aims at supporting all
+of C, which it does already, while plugins have their own limitations. The
+Jessie plugin is the one that translates C programs into an intermediate
+language inside the Why platform, so that Frama-C can be used to perform
+deductive verification in the same way as Caduceus. We just started to
+support casts and unions for experiments, but we have not released this part
+yet. It should be the case ultimately that constructs not supported in
+Caduceus are supported in this Jessie plugin.
+
+Of course, we strongly encourage all users of Caduceus to switch to Frama-C,
+which should consist mostly in adding semicolons at the end of every clause
+in annotations ...
+
+
+
+----------------------------------------------------------------
+
+Indeed, \separated is not implemented in the version of Frama-C released,
+and \base_addr is not yet implemented in the Jessie plugin (although it is
+implemented in Frama-C).
+Hopefully the next release will solve these problems :0)
+
+----------------------------------------------------------------
+
+
+the normal way of treating separation in Jessie is to divide
+heap into regions automatically ([mt]works in lithium), which will become the default in the next
+release. With only one region for memory, your example is proved with any of
+Z3, Alt-Ergo and Simplify (not Yices though).
+
+We found that automatic separation is usually what you need, although there
+will be an option -jessie-no-regions to avoid such splitting of memory.
+
+Given a function signature:
+
+void array_cpy(int* a, int n, int* b)
+
+the regions inferred for [a] and [b] depend on the code of function
+[array_cpy] and the functions it calls (possibly recursively). These regions
+are assumed different, unless the code explicitly aliases them, say by
+assigning [a] to [b]. Then, the code of function [array_cpy] can be easily
+verified in this separated context, while it can still be called in a
+context where [a] and [b] may alias if:
+
+1) [a] and [b] are only read through in a call to [array_cpy]
+2) [a] and [b] are accessed at separated locations
+
+There will be an extensive section of the Jessie manual dedicated to this
+matter.
+
+---------------------------------------------------------------------
+
+In the following discussion, whenever Yannick mentions Frama-C, please 
+note that it refers *only* to the Jessie plugin in the non distributed 
+development version.
+
+- It is probably not a good idea for this plugin to introduce specific 
+extensions to the syntax or semantics of ACSL. It breaks the possibility 
+of plugins to interoperate safely.
+- The syntax and semantics of ACSL are decided during weekly meetings of 
+the ACSL steering committee. There is not yet a clear consensus 
+regarding the extensions proposed by Yannick (declspec, default non 
+aliasing property et al.). We are actively working on these. The results 
+will be published on this list asap.
+---------------------------------------------------------------------------
+Frama-C uses by default cpp to preprocess source files, but you may change
+this by setting option -cpp-command. Otherwise, Frama-C relies on CIL to
+link source files and generate a unique abstract syntax tree to analyse.
+
+HTH,
+Yannick
+
+On Thu, Oct 9, 2008 at 8:13 PM, Satrajit Roy <satrajit.roy at gmail.com> wrote:
+
+> Hi,
+>
+> I just downloaded Frama-C on my Windows box and it seems that it uses 'gcc'
+> by default and I couldn't find any way to change it to use 'Visual C'. Is
+> there a way to make Frama C use Vsiual C?
+>
+-------------------------------------------------------------------------------------
+
+You seem to get the normal behavior of Frama-C. It parses your code and
+>> annotations, and it returns, unless a plugin is selected, like value
+>> analysis with option -val.
+>> If you want to perform deductive verification on your code using the
+>> Jessie plugin, you should call it with option -jessie-analysis. Is that what
+>> you want?
+----------------------------------------------------------------
+frama-c-gui -val -cpp-command 'CL.exe /C /E %1 > %2' x.c
+
+-------------------------------------------------------
+
+I checked your example with the current version of Frama-C, and it is proved
+correct. Frama-C sticks to the semantics of C which, contrary to what you
+say, returns the number of array elements between [a] and [b] for the
+pointer difference [b - a]. Thus, your last example with sizeof is
+incorrect.
+--------------------------------------------------------
+
+ACSL is a language whose specification is given by the document available
+  on http://frama-c.cea.fr/acsl.html
+- Frama-C in its current state supports only parts of ACSL. These parts
+  are documented in the acsl-implementation.pdf documentation.
+  Each acsl-implementation.pdf is specific to the version of Frama-C 
+  with which it is distributed. The semantics of the revision bars and
+  colors is given in the preamble of the document.
+- The next release will come with a Changelog explaining the increments.
+  At this time ACSL support of Frama-C is not yet freezed.
+- Plugins shall provide documentation describing what part of ACSL
+  they can understand.
+
+----------------------------------------------------------
+
+Hi!
+
+>I'm going to try to build some extended example of frama-c with proof of
+>LTL properties, probably realtime properties, and probably some runtime
+>check integration. Also I'd like to build an example proof of validation
+>of the code and model, say validation for an automata model.
+
+>As far as I see now I should extend axioms and write some logic as well.
+
+>Do you think it's something doable?
+
+The ACSL annotation language does not have any constructions to express
+temporal properties. So my opinion, for what it's worth, is that
+encoding LTL properties in ACSL with the help of ghost code is probably
+doable but is going to require a lot of elbow grease.
+
+Also, if you think about it, the good thing
+about ACSL properties as opposed to run-time assertions is that they
+can be composed, allowing a modular approach to the difficult problem
+of building sizable software that works.
+Typically, once the contract for one particular function is defined,
+writing the function and proving that the function satisfies the
+contract on the one hand and on the other hand writing the calling function,
+proving that the precondition of the contract is satisfied at the call site
+and that the calling function satisfies its own specification have become
+two separate, independent, smaller sub-problems that can even be
+assigned to different people. And you know that your program will work
+when you put the pieces of the puzzle together!
+With run-time assertion checking you can't test the calling function
+until you have something to execute for the called function.
+
+Although Frama-C offers the possibility to write ghost code to help
+where ACSL alone does not allow to express the desired properties,
+when you take this road I am not sure if you can retain the modularity
+that makes the approach promising. 
+
+Yes, the first step would be to think about the axioms and logic functions
+that express the properties that you are interested in. Do not hesitate 
+to show your experiments on this list, everyone would be very interested
+and there are experts (not me!) that read it and that will be able to provide
+feedback.
+
+----------------------------------------------------------------
+
+All ACSL constructions are meant to be supported by Frama-C at some
+point 
+
+-----------------------------------------------------------------
+frama-c -jessie-analysis -jessie-int-model exact -jessie-no-regions -jessie-gui fill.c
+
+
+------------------------------------------------------------------
+
+Frama-C is Open Source and Frama-C's users
+are bright and motivated people.
+It is probably a good, efficient way
+to work to send them patches in order to
+fix the problem that is blocking them and allow them
+to further their tests, so that the next release may work
+really well for what is supposed to work already.
+
+
+-----------------------------------------------------------------
+
+You must realize it is in general hard to duplicate in the logic all the
+details of implementation, and it is not generally useful to do this.
+Logical annotations should be here to help proving some useful property
+about the program, not to duplicate the same amount of information as found
+in the program. It is all the more important to realize this if you want to
+work with automatic provers, that cannot handle complex VC automatically.
+
+
+---------------------------------------------------------------------
+
+
+About bugs in specifications: they can happen. It is possible to write
+contracts that are not what you intended but happen to be satisfied by
+the function.
+Firstly, these specification bugs only go uncaught when
+the function incidentally satisfies also the buggy specification. You  
+are in
+effect writing what you want the function to do twice, once in the code
+and once in the specification, and the redundancy catches many errors
+that would otherwise go unnoticed.
+Secondly, these bugs are generally caught at the next level of  
+specification,
+when you realize that you do not have enough hypotheses to prove that
+the caller to the function with the wrong contract satisfies its own  
+contract.
+In another, but very specific, sense, bugs in specifications can not  
+happen.
+
+--------------------------------------------------------------------
+
+would it be possible for you to make a self-contained analysis
+project that contained all the headers used by the C files and
+to post it somewhere?
+
+Frama-C does not need to execute the code, so it is fine to analyze
+a linux program on any other platform, but the headers must be
+provided even if (on a Linux platform) they are in the system  
+directories.
+
+--------------------------------------------------------------------
+
+PS: Note that Frama-C is intended to be a portable platform.
+The target platform for the analysis can be chosen independently from
+where you are running the analyzer. You can analyze 64-bit programs
+on a 32-bit machine and embedded code intended for an ARM
+environment on Windows. 
+
+
+--------------------------------------------------------------------
+
+> A new release of Why platform is available on the Web page. It is
+ > synchronized (e.g. compatible) with Frama-C Lithium 20081201.
+ >
+ > Note for Windows users: this distribution indeed contains a
+ > specialized
+ > version of the why-cpulimit command. For users who experience a know
+ > problem in GWhy that is provers that never stop, you should give a try
+ > to this new version. Please report any successful or failing
+ > experience...
+
+So, could you try it, and report if it works now?
+
+A mistake of us was that this new windows-specific version of 
+why-cpulimit has not been included in the Lithium release.
+--------------------------------------------------------------------
+
+Could you try to set FRAMAC_SHARE to a windows like path with forward
+slahes like
+C:/Frama-C/share/frama-c 
+...
+was to put the variable WHYLIB equal to:
+
+C:/Frama-C/share/frama-c/why
+
+Sorry, I did not understand you were using a cygwin shell. In that case 
+you should do
+
+export WHYLIB=/usr/local/Frama-C/share/frama-c/why
+
+I exported the environment variables WHYLIB and FRAMAC_SHARE as shown below.
+
+ 
+
+$ export WHYLIB="C:/cygwin/usr/local/Frama-C/share/frama-c/why"
+
+ 
+
+$ export FRAMAC_SHARE="C:/cygwin/usr/local/Frama-C"
+
+ 
+
+------------------------------------------------------------------
+
+Although this is only my opinion, I wouls suggest that, 
+from the standpoint of generalist distributions,
+the Frama-C package should be considered as the package
+that provides Why. Why? Each Frama-C release comes with
+what is the latest version of Why at that point*.
+Although a serious user of why understands the difference
+between the two and may need a Why feature that was added
+since the last Frama-C release (nowadays about every
+three months, and likely to evolve in a more flexible system),
+a serious user of Why is already likely to compile Why
+from sources instead of using 
+his distribution's binary package.
+
+
+Yes, the next Frama-C major version (aka Beryllium) will not be 
+distributed with a Why version anymore.
+
+For Lithium version: we have taken care of this fact by releasing a Why 
+version synchronized with Frama-C. So for a package, my suggestion is to 
+build two packages and make a dependency of Frama-C on that precise Why 
+package.
+
+Of course, even better will be to provide more small packages, like 
+Frama-C without the Jessie plugin, without the GUIs, etc. But it would 
+require much harder work, for small benefit since most users would be OK 
+for having everything by default
+
+---------------------------------------------------------------------
+
+
+
