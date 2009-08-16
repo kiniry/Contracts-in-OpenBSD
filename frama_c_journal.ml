@@ -1,4 +1,4 @@
-(* Frama-C journal generated at 16:30 the 15/08/2009 *)
+(* Frama-C journal generated at 12:15 the 16/08/2009 *)
 
 (* Running *)
 let start () =
@@ -11,7 +11,7 @@ let start () =
  let () = Cmdline.CppExtraArgs.set
   (Cilutil.StringSet.add "-include e:\\Frama-C\\bin\\share\\frama-c\\jessie\\jessie_prolog.h" Cilutil.StringSet.empty) in
  let () = Cmdline.Jessie.Gui.set true in
- let () = Cmdline.Files.add "expl/24.c" in
+ let () = Cmdline.Files.add "expl/27.c" in
  let () = File.init_from_cmdline () in
  let () = Project.remove (Project.from_unique_name "temp") in
  let () = Project.set_current (Project.from_unique_name "jessie") in

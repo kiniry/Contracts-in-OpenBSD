@@ -387,3 +387,522 @@ for having everything by default
 
 
 
+I recommend not to modify regular system headers. You can simply augment 
+your source code with contracts for functions you use (or put them in a 
+separate file that you #include). e.g
+
+/*@ requires \valid(buf+(0..count-1));
+   @ assigns errno, buf[0..count-1];
+   @*/
+ssize_t read(int fd, void *buf, size_t count);
+
+In principle, Frama-C should be shipped with contracts for standard 
+library functions, but this is not an easy thing to do: it is not clear 
+at all what would be a "universal" contract for all use of thos functions...
+
+------------------------------------------------------------------
+
+
+valid   (green dot)     : the VC is a true formula
+invalid (red dot)       : the VC is not a true formula
+unknown (question mark) : it is not known if the formula is true or not
+timeout (scissor)       : the prover did not answer before the timeout 
+
+                           (10 s by default)
+failure (tools)         : the prover answer was not recognized
+         (hard disk)     : this VC is already known valid in GWhy cache
+
+* the shape of the icons varies among users, becasue these are builtin 
+GTK icons, which depend on the current gtk theme
+
+* in principle, invalid should be identified with unknown, because 
+provers are incomplete can very rarely say that a formula is definitely 
+not true. historically, Simplify answers is either "valid" or "invalid", 
+where "invalid" indeed means "unknown". The GWhy maps those invalid to 
+the question mark but the textual output might still classified them as 
+invalid.
+
+------------------------------------------------------------------------
+"logical functions offset_min
+and offset_max [are used] to express the minimal/maximal offset at
+which a pointer can be indexed". 
+------------------------------------------------------------------------
+
+Regarding the problem of code highlighting under GWhy, this is *probably* due - under Cygwin - to CR/LF DOS' ending lines.
+By dos2unix-ing your source files, this should be OK!
+
+----------------------------------------------------------------------------
+My overall comments regarding Frama-C:
+
+ * I'm rather pleased with the software. The documentation is useful
+(good index for ACSL) even if not complete (Jessie), the software is
+working and I had only a few blocking bugs. Once you know a few idoms
+(loop invariants, non terminating functions, ...), it is rather easy
+for a basic engineer like me to express properties and check them;
+
+ * Frama-C/Jessie helped me to find bugs in my original program,
+either benign ones (e.g. the potential overflow of counters) or more
+serious ones (e.g. program behaviour when reading too short candidate
+list).
+
+ * A working subset of the Frama-C ecosystem is Free Software, making
+easier to use it in various settings. I hope the few remaning
+licensing issues[2] will be cleared out, allowing inclusion of Frama-C
+into various Linux distributions;
+
+ * On my program, Jessie/Alt-Ergo GUI are becoming a bit slow,
+compared to toy example I have tested. It might come from my
+particular program, the way I have written or structured the code. I
+would be interested to hear of any way I could improve this;
+
+ * I haven't dug yet into the development of plugins or into the
+Frama-C GUI (slicing, ...) so I won't comment on them, even if they
+seem quite interesting.
+
+-----------------------------------------------------------
+
+>>//===== f.h
+>>#define vx 0.0
+ 
+>>//===== f.c file
+>>#include "f.h"
+>>float main(float v) { /*@ assert v<=vx ; */ return v; }
+ 
+>>//===== stdout of frama-c f.c
+>>[preprocessing] running gcc -C -E -I.   e1.c
+>>File e1.c, line 6, characters 14-16:
+>>Error during analysis of annotation: unbound logic variable vx
+>>e1.c:6: Warning: ignoring logic code annotation
+
+in this case, can't you just use "frama-c -pp-annot f.c -print" :
+
+------------------------------------------------------
+
+> I'm currently working on a larger source code of about 100  
+> functions, for a total of 10K Sloc.
+> Value Analysis is performed on the whole code through a classical  
+> command line like:
+> frama-c-gui -val ...
+>
+> After some computations (~40 minutes elapsed time), Frama-C's GUI is  
+> displayed.
+
+The 40 minutes and the ~500Mb of memory are the resources used
+by the value analysis itself. You can avoid the wait the next time
+you need the results of the value analysis by using
+the -save / -load options, typically :
+frama-c -val *.c -save state
+frama-c-gui -load state
+
+
+-----------------------------------------------------------
+
+> typedef struct { float u; float y;} LABS;
+> void abs (LABS *p)
+> {
+>   switch (0.0 < p->u)
+>   {
+>     case 0 :
+>       p->y = -p->u;
+>       break;
+>     default :
+>       p->y = p->u;
+>       break;
+>   }
+> }
+>
+>  "frama-c -val -slevel 100 foo.c"
+
+The author is concerned that the value analysis fails to
+determine that p->y is a positive float.
+
+Unfortunately there are a number of limitations to work around:
+
+1/ Frama-C must be told to turn the switch into cascading if-then-elses
+with the option -simplify-cfg
+
+2/ The value analysis does not handle strict comparisons between
+floats (such as 0.0 < p->u) and treats them conservatively as if
+equality was possible.
+
+3/ To treat this example automatically, the value analysis would have
+to handle the relationship between the fact that the condition is 0 or 1
+and the value in p->u. Unfortunately, this is one more indirection than
+it can handle.
+
+You can separate the cases beforehand so that it notices the
+relationship, but then you have to be careful about point 2/ above
+(any substate where the condition 0.0 < p->u can be both true or
+false is necessarily approximated, and because of 2/ you have to
+have such a substate, so you need to make this
+substate as small as possible).
+
+The example, revisited :
+
+typedef struct { float u; float y;} LABS;
+void abs (LABS *p)
+{
+   //@ assert p->u >= 0.0001 || 0. <= p->u <= 0.0001 || p-> u <= 0.;
+   switch (0.0 < p->u)
+   {
+     case 0 :
+       p->y = -p->u;
+       Frama_C_show_each_A(p->y);
+       break;
+     default :
+       p->y = p->u;
+       Frama_C_show_each_B(p->y);
+       break;
+   }
+}
+
+Command line :
+
+frama-c -val -slevel 100 /tmp/t.c  -main abs -simplify-cfg -context- 
+width 1 -context-valid-pointers
+
+Results:
+
+/tmp/t.c:4: Warning: Assertion got status valid.
+-> the assertion is used as a hint but does not entail any
+additional proof obligation.
+
+Values for function abs:
+   star_p[0].u E [-1.79769313486e+308 .. 1.79769313486e+308]
+         [0].y E [-0.0001 .. 1.79769313486e+308]
+-> almost what you wanted :(
+
+Sorry for the disappointing results in this case.
+
+
+-----------------------------------------------------------------------------
+
+
+>1. What C/C++ standards are supported by the parser being used in 
+>Frama-C? (C89, C99, C++ 2003, GNU Extensions, ...)
+
+Frama-C handles most of C99 (as far as I remember, only
+the complex type defined in C99 is not handled),
+and most of GCC and MSVC extensions.
+Work has been done on C++ support but is not available.
+The reason is that supporting C++ is a huge amount of work
+and that not all C++ constructs are handled yet.
+
+>2. What algorithms are implemented for interval analysis? How precise is 
+>the analysis? Are values of dynamic objects taken into consideration?
+
+The value analysis is based on the theoretical framework
+of Abstract Interpretation:
+http://en.wikipedia.org/wiki/Abstract_interpretation
+
+We find the analysis to be quite precise, and in particular
+more precise than what you would get with any other open-source
+static analyzer that we know of.
+I am not sure I understand the question about
+"values of dynamic objects", but if the question is whether
+the analyzer can distinguish the different values successively
+taken by a variable during the execution, the answer is "yes".
+
+>3. Is there implemented any kind of points-to analysis? Which kind?
+
+The values computed by the value analysis can be adresses
+(for instance for the values of pointer variables),
+so it directly translates into points-to information.
+In the vocabulary that is usual for points-to analyses,
+it is path-sensitive, context-sensitive and interprocedural.
+
+>4. How structures and multi-dimensional arrays are supported in 
+>implemented analysis types? Is the analysis element- and field-aware?
+
+The value analysis is element-aware and field-aware
+(of course for arrays this makes a difference only
+when the expression used as an indice can be evaluated
+with enough precision. There are a number of settings to
+improve precision at the cost of more time and memory use).
+
+In fact, casts between pointers to different structs,
+and casts between pointers to structs and pointers to arrays,
+are handled with precision too.
+
+>5. Which generic types of analysis are implemented? 
+>(Path-sensitive/insensitive, Context-sensitive/insensitive, 
+>Inter-procedural/intra-procedural, ...)
+
+CIL, the front-end on which Frama-C is based, provides
+generic forward and backward generic dataflow analyses
+that can be used for implementing path-sensitive or insensitive,
+context-sensitive or insensitive, and inter- or intra-procedural
+analyses. The value analysis and other analyses such
+as the functional dependencies computation are
+implemented using these generic analyses, and the simplest
+of these analyses can be used as examples.
+
+>6. Which companies/institutions/research groups/... has used Frama-C 
+>framework successfully?
+
+I would feel a little uncomfortable dropping names, so I will let
+industrial and academic partners come forward
+if they wish to (note that there are hints
+about where Frama-C is in use in the archives of this 
+very mailing-list).
+
+>7. Has any tests been conducted on real applicability of Frama-C 
+>framework? (For instance to analyzing or verifying any commercial or 
+>opensource software) 
+
+Again, confidentiality rules prevent us from having all the
+details, not to mention giving them to you. We have heard about
+projects of tens (or hundreds) of thousands lines of embedded
+C code on which the value analysis was providing useful results
+in hours (or days) of computations and hundreds of megabytes
+(or gigabytes) of memory. Your mileage may vary, it very much
+depends on the nature of the code you want to analyze.
+
+A tutorial that will double as a
+demonstration of the value analysis' capabilities on
+"real" software should be available very soon.
+
+----------------------------------------------------------------------------------
+
+>Let's consider a program that builds a large graph (tree or linked list) 
+>in dynamic memory. Each element of the graph is a structure containing 
+>fields with data. Will the implemented analysis be able to define right 
+>and precise values for each member of this graph on the heap?
+
+Warning: long answer coming up.
+
+While it can theoretically be useful to run the value analysis on deterministic
+programs that always execute the same computation and return the
+same result every time, it is most useful in practice when there is
+non-determinism in the execution -- for instance, the program
+accepts some inputs that are subsequently used for computing
+something. This non-determinism is typically introduced with
+built-ins provided for this purpose (there are other ways too).
+One of these built-ins is for instance 
+called Frama_C_interval(int, int); This is useful to specify
+expected ranges for inputs, values from sensors, ...
+
+The answer to your question completely depends whether there
+is non-determinism in the shape of the allocated blocks (the way
+they point to one another). If there isn't
+(say, the non-determinism is only in the integer values of the
+data fields), then it is likely possible to make a precise analysis.
+An example of such a program is used as a benchmark in
+the article there:
+http://portal.acm.org/citation.cfm?doid=1411304.1411308
+I'll send you a copy if you do not have the necessary subscription.
+This example uses a modelization of malloc where each invocation
+of malloc creates a new variable. This breaks the widening
+mechanism, so if there are some calls to malloc inside a loop,
+this loop needs to be completely unrolled. Apart from that,
+this modelization works very well when the "no non-determinism
+in the shape" restriction applies. It even detects out-of-bound
+accesses to a dynamically allocated block.
+
+If there is non-determinism in the shape of the allocated blocks,
+you may still get a result that is good enough for you with
+one of the other malloc modelizations, but even if one of them
+work, you shouldn't expect the results to be as precise.
+
+>What are 
+>approximate memory requirements for conducting analysis on such a small 
+>program building large complex structures in dynamic memory?
+
+The benchmark in the above article is a small program
+that allocates many blocks. Thousands of calls to malloc
+translated in hundreds of megabytes of memory used by the
+analyzer.
+
+>Many existing algorithms use widening and other techniques leading to 
+>precision loss and even wrong information. As far as I could understand 
+>Frama-C framework is based on abstract interpretation approach, so it 
+>bounds the size of programs being analyzed. Especially if each path in 
+>the program is considered separately. How could you estimate resources 
+>needed for conducting the analysis depending on the size of the program 
+>being analyzed?
+
+The figures I gave for the resources earlier and now are only
+typical figures for resource use. It all depends on the analyzed program.
+Execution paths are merged by default, with an option to keep
+a number of them separated. This gives the user control over the
+compromise between precision and resources use. 
+Even when this option is used, execution paths are automatically merged
+when the values of the variables are identical to (or included in) 
+the values of another path. With this and other techniques (e.g. hashconsing,
+described in the article), resource use is kept to the minimum possible
+for representing the final results.
+
+The "final results" are tables indicating the values of variables in each
+statement of the analyzed program. If you don't need these tables,
+we can show you how to omit updating them during the analysis,
+which will greatly reduce memory use.
+
+>By the way, aren't Binary Decision Diagrams used in Frama-C?
+
+It is natural to think that they could, because
+value analysis with separation of states feels
+very much like "symbolic model checking" where
+the "model" is the C program being analyzed.
+In particular, if the C program happened to be
+a simulation, using boolean variables,
+of some kind of logic circuit, the value analysis
+(with separation of states) of the program would be
+equivalent to model-checking the circuit.
+But actual C programs do not have just boolean variables
+or variables whose values can conveniently be
+encoded in tuples of booleans, so the value
+analysis borrows ideas and algorithms from
+model-checking without literally relying on BDDs.
+
+And truth be told, "hash-consing" was invented
+in functional programming before being popularized
+with BDDs, so it's only fair to borrow it back.
+
+
+-----------------------------------------------------------------------------------
+
+I did a little work on the aWhy Eclipse plugin (mostly cleanups, artwork
+and adaptation to Ganymede) to use it with Frama-C. Unfortunately
+because of incompatible changes in Why file names it only works with
+frama-c-Lithium-20081002+beta1.
+
+Anyhow, the code is available on github:
+
+http://github.com/frama-c-eclipse/frama-c-eclipse/tree/master
+
+The screenshot is here:
+
+http://cloud.github.com/downloads/frama-c-eclipse/frama-c-eclipse/frama-c-eclipse.png
+
+--------------------------------------------------------------------------------------
+
+If you want to see
+all proof obligations, you can use the option -why-opt '-all-vc', but
+it is mainly intended for debugging purposes only.
+
+------------------------------------------------------------------------------------
+
+Frama-C won't replace your favorite lint checker, it'll add to it.
+Put Frama-C right next to your lint checker and use them together.
+
+
+PS: Or, if there is no available program that checks exactly
+the syntactic rules that you want, you can implement them
+as a custom Frama-C plug-in, too.
+
+-------------------------------------------------------------------------------------
+
+ACSL is a language that is being defined separately from
+the implementation of the tools that use it. The constructs
+you are using are part of ACSL but not yet supported in Jessie.
+
+-------------------------------------------------------------------------------------
+
+My opinion is that proving annotations is as least as much difficult as 
+programming. Programming is something that you have to learn, and 
+improving your programming skill is the same as improving your expertise...
+
+Now, to answer the precise question: when something is not proved 
+although you think it is true, I suggest first to insert assertions in 
+the code, to state intermediate properties you think are needed to 
+obtain a proof. Seeing whether the assertion is proved or not, and 
+seeing whether the post-condition is proven when given the assertion, 
+will help you to understand.
+
+----------------------------------------------------------------------------
+
+/*@
+     ensures \result >= 0.0;
+*/
+double sqr(double x)
+{
+    return x * x;
+}
+
+1/ A lot of work has been done on floating-point operations
+since the last release. That is to say, support for floating-point
+operations will be much less partial in the next release than
+in Lithium, both for Jessie and for the Value Analysis.
+
+2/ With the value analysis you
+need to indicate that the property must be analyzed
+by case by adding an assertion x<=0 || x>=0, which
+does not incur any additional proof obligation since it
+can be verified to hold easily. The same trick may help
+automatic theorem provers, if you somehow arrange for
+this disjunction to be in the hypotheses, they may have
+the idea to study what that means for x*x separately.
+
+3/ With both Jessie or the Value Analysis you will get a 
+proof obligation.
+You will probably want to use the "strict" model in which
+infinites and NaN are treated as unwanted errors when they
+occur. In this case the proof obligation is that x*x should
+not overflow.
+Even with the Full model in Jessie your post-condition does
+not hold because NaN is not >=0 (the result can be NaN
+when the sqr function is applied to NaN).
+
+-----------------------------------------------------------------------------------
+
+You asked about the different "why" versions. The answer is technical.
+Frama-C and Why are both currently in development. Because
+of incompatible changes, a particular version of Frama-C only works
+with a particular version of Why. Thanks to the dynamic plug-in
+technology that is being put in place in Frama-C, this problem
+will soon disappear.
+
+
+------------------------------------------------------------------------------------
+
+>I am interested in learning more about the Frama-C tool, and especially 
+>about the memory model it implements for C, before I go any further with it.
+
+Thanks for your interest.
+There is not a single memory model. Each plug-in is free to define
+the hypotheses it needs. The annotation language, ACSL,
+is as memory-model-agnostic as we were able to make it.
+
+Regarding documentation of memory models in jessie, I recommend
+
+http://www.lri.fr/~marche/moy09phd.pdf
+
+the "default" memory model is typed, which allows to assume separation 
+properties which are handy in general, but does not allow pointer casts.
+When pointer casts occurs, it tries to switch to a more complicated 
+memory model. See document above.
+
+
+--------------------------------------------------------------------------------------
+yes, you have to include the jessie/string.h file in order to use the
+valid_string predicate since it is defined here. The C prototypes
+declared there should conforming to the C standard, i.e. there should
+not be any clash. 
+Generally speaking, including headers from the standard library is not
+really advised (except for the macros), since Frama-C won't know
+anything about the function declared there, and thus won't be able to
+tell something meaningful about code which uses them. Besides the
+jessie/*.h headers, other functions are available in the share
+directory of Frama-C (frama-c -print-path will give the exact location),
+usually under the form of a prototype with its specification and a
+reference implementation (which is better suited for the value analysis
+plugin). 
+We have some plans to extend that to a sizable portion of the
+C standard library, feel free to suggest the functions that you are
+missing as candidates for a full specification.
+
+---------------------------------------------------------------------------------------
+
+We have used Splint (www.splint.org) to check our code. Splint uses annotations of the form /*@ ... @*/, which cannot be used together with Jessie. 
+On the other hand, Jessie annotations may lead to error messages in Splint. 
+
+---------------------------------------------------------------------------------------------------------
+
+No prover can handle all POs alone, but this is a known fact. It is
+better to work with two or more
+---------------------------------------------------------------------------------------------
+
+
+
+
+

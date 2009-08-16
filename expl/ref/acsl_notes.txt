@@ -594,3 +594,356 @@ But otherwise not necessarily... This is why in textbooks you usually
 prefer to assume side-effect free loop conditions...
 ----------------------------------------------------------------------
 
+>  2. for read(), the system declaration is "ssize_t read(int fd, void
+> *buf, size_t count);". However, the "buf" pointer is to void, that
+> Frama-C does not support. For example I cannot declare "requires
+> \valid(buf);". And I can't change the declaration to "char *" as it
+> would not match the system declaration. Any recommendation? I could
+> copy/past the code of read() and redefine it, but I fear I could just
+> postpone the issue to another function.
+
+I suggest
+
+/*@ requires \valid((char*)buf+(0..count-1));
+   @ ...
+
+this is quite consistent with the informal spec of read, where count
+denote the number of *bytes* to read
+
+notice that \valid((char*)buf) is not enough to prevent buffer overflow
+
+Finally, I said before that Frama-C is not shipped with spec for 
+standard lib functions, but this is not completely true: there are 
+specifications for strings functions, in jessie_prolog.h file. You 
+should have a look at them
+
+--------------------------------------------------------------------------
+
+void exit(int err_code)
+{
+  for(;;);
+}
+int main(void)
+{
+        static int rand_fd = -1;
+
+        rand_fd = open("/dev/random", O_RDONLY);
+        if (rand_fd < 0) {
+                perror("open");
+                exit(EXIT_FAILURE);
+        }
+	//@ assert rand_fd >= 0;
+
+        close(rand_fd);
+
+        return EXIT_SUCCESS;
+}
+
+unable to prove
+property "assert rand_fd >= 0;". It seems obvious to me that the
+exit() function never terminates. So, the only case that goes past the
+"if (rand_fd < 0)" should be when "rand_fd >= 0", thus proving the
+assert clause. This is apparently not the case. What have I missed?
+
+By the time function "main" is analyzed, the tools have forgotten the
+body of "exit"; they only have its (empty) specification. Try with the
+following specification, it should work:
+
+/*@ ensures \false; */
+void exit(int err_code) ...
+
+It is a standard way to specify that a program point is not reachable.
+---------------------------------------------------------------------------
+> However, when I run frama-c -jessie-analysis, I have the following
+> error message:
+>   No code for function read, default assigns generated
+> 
+> Is my contract for read() really taken into account? In that case, is
+> it a spurious error message?
+
+This warning comes from the fact that you did not give a "global" 
+assigns clause, i.e. outside of any behavior.
+assigns L1,L2;
+behavior b:
+    assumes A;
+    assigns L1;
+
+then it means that, in any case, only locations L1 and L2 can be 
+modified, and if in the pre-state A is true, then only locations L1 can 
+be modified.
+
+--------------------------------------------------------------------------
+
+> /*@
+> assigns \nothing;
+> ensures E < A ==> \result == B;
+> */
+> float F(float E, float A, float B)
+> {
+>     if (E < A) return B;
+>     else return 0.;
+> }
+> 
+> The postcondition is proved by Z3, Yices and CVC3, but neither by Alt-
+> Ergo, nor by Simplify.
+> (of course it is proved by all if I change the float type to int)
+> 
+> I would appreciate some intuition on the reason why it is so.
+
+First thing: by default, the jessie plugin interprets floats by 
+mathematical real numbers. This might change later, but for the moment 
+the default is such because true floating-point support is not fully 
+operational.
+
+So we have to think of E, A, B as real numbers. The VC for the "else" 
+branch has the form
+
+E >= A  (* for the negation of the test *)
+implies the post-condition which is of the form E < A ==> some P
+
+in principle, this seems trivial because P must be proved under 
+contradictory hypotheses E >= A and E < A. The point is that here
+ >= and < denote comparisons of real numbers, and for Simplify and 
+Alt-Ergo, the support for reals numbers is void or very weak, in the 
+sense that they do not even know that >= is the negation of <.
+
+The authors of Alt-Ergo are certainly willing to improve their tool. We 
+can hope for a better Alt-Ergo in the future (I forward this example to 
+their dev team!).
+
+On the other hand, Simplify will not evolve anymore so it will never 
+support real numbers.
+
+-------------------------------------------------------------------------
+
+1/ The separation hypothesis that p is separated from &p is an
+assumption. Jessie does not handle 
+such casts and although it is fundamentally a compositional
+tool able to analyze a function outside of its context, it
+still needs to assume that the context does not contain such
+pointer casts that would break its memory model. One of these days
+we are going to provide you with a methodology for insulating the
+dangerous casts so that you can safely apply Jessie to some functions
+even though dangerous casts are used in others. This is definitely
+on our to-do list. Until then, the safest way is to restrict your use of
+Jessie to applications that do not use unsafe casts *as a whole* --
+i.e. even outside the functions you are analyzing.
+
+2/ The hypothesis that two distinct pointer arguments of a function
+point to separate memory regions should be a precondition. It has been
+a while since I last launched Jessie and I am not sure what it does now,
+but if Jessie assumes the arguments pointers are separated, it certainly
+should express the assumption it is making as a precondition.
+
+To sum up the answer to your question, it depends on the
+category of the separation hypothesis. For category 1/, it's an
+assumption. For category 2/, it should be a precondition. I am pretty
+sure it is. It can not not be, can it? How could it? Yeah, it has to be
+a precondition.
+
+--------------------------------------------------------------------
+
+Technically, there are only integers in the logic, int is only a
+shortcut to say 'I have an integer and it is between MIN_INT and
+MAX_INT'. It exists mainly to be able to lift C lval in the logic, but
+purely ACSL values should use the primitive type directly.
+
+-------------------------------------------------------------------
+
+In fact, assigns is not broken for arrays, but in order to have a
+chance to prove that, you'd need to add loop assigns in your loop
+annotation (as always, the loop itself is "opaque" for jessie: for it,
+the loop does what it written in the annotation, and in absence of loop
+assigns, this means that the loop can assign everything).
+However, the current version of the jessie plug-in does not support
+loop assigns. Next Version™ might fix that.
+Although loop assigns is accepted by the ACSL parser, it is not
+supported by the jessie plugin yet (you should have a warning about
+that on stderr), so that it doesn't help to prove the assigns.
+When loop assigns will be supported by the jessie plugin (maybe in the
+Next Version, but don't take that as a formal statement), the current
+version of your specification should be proved without much trouble.
+
+an incompleteness bug in the jessie tool makes impossible to prove 
+"assigns" clause for functions containing loops.
+in principle, this should be proved even without adding a "loop assigns" 
+on those loops: the "assigns" clause should be implicitly copied to 
+inner loops.
+
+Hopefully this will work in next release (I mean both explicit loop 
+assigns clauses, and implicit copy of the main assigns to loops)
+
+sorry for the inconvenience, and please for the moment please ignore the 
+proof failures on assigns clauses.
+
+--------------------------------------------------------------------
+
+\at(expr,Pre) always denotes the value of expr in the pre-state of the
+function (i.e. when the function is entered).
+
+void myFunction(char *pString, int nbBytes)
+{
+/*@
+loop invariant i == pString - \at(pString, Pre);
+*/
+for (i=0 ; i<nbBytes ; i++)
+
+-------------------------------------------------------------------------
+
+
+1/ when you subtract two valid pointers with the same base address,
+the result is never an overflow, so do not worry about that and
+worry about the validity instead.
+
+
+--------------------------------------------------------------------------
+
+loops are very much treated
+as opaque blocks by those analyzers that are based on Hoare logic.
+If you need a property after or even inside the loop,
+you usually need to put it in the loop invariant,
+even if it's orthogonal to what the loop does (and it's very easy to
+forget in this case).
+
+Actually it's so annoying that most analyzers try to save you the writing
+of these parts of the invariant, hence my reserves. It may not be
+necessary with Jessie. But it doesn't hurt to try.
+
+The loop invariant needs to remember everything that has already
+been done (the (\forall integer k ; 0 <= k < i ==> t[k] == 2)
+part) and all the information that will be necessary to make sense of  
+the next iterations,
+i.e. the fact that the untouched cells still contain 1; that's the
+(\forall integer k ; i <= k < 100 ==> t[k] == 1) part.
+
+-------------------------------------------------------------------------
+> 
+> It seems that in the ACSL documentation there is no way to actually
+> create a logical function that returns something like a (char *) (only
+
+In theory, any C type is accepted in annotations. However, pointers
+that cannot be related to an object in the "C world" (such as the
+return value of your logical function) are indeed a bit problematic.
+Their status is not completely clear yet.
+
+------------------------------------------------------------------------
+
+our formulations are all correct. However, the normalization phase
+performed by the jessie plugin is not compatible with multi-dimensional
+arrays. This is a known bug
+
+-------------------------------------------------------------------------
+
+>   ensures  \forall integer i; (0 <= i <5) ==> my_var[i] == 0;
+>  @*/
+> void main()
+> {
+>  int i;
+>  /*@ loop invariant 0 <= i <= 5; @*/
+>  for ( i = 0; i<5; i++) { my_var[i] = 0; }
+>  // The following assertion fails...
+>  /*@ assert \forall integer i; (0 <= k < 5) ==> my_var[k] == 0; @*/
+> }
+
+I assume that you mean \forall integer k; ? Otherwise, the assertion is
+ill-formed. The post-condition is proved because you have the assertion
+as hypothesis when trying to prove it (an assertion can be seen as a
+logical cut: you have to prove it at the point of program where it
+appears, but in exchange, it can be used as an hypothesis for each
+subsequent point). If you remove the assertion altogether, the ensures
+is not proved anymore.
+Now why isn't that proved in the first place? We are just after a loop,
+so the first idea should be 'Is the loop invariant strong enough?' In
+fact, the invariant does not speak about my_var, so nothing is known
+outside of the loop for my_var.
+
+-------------------------------------------------------------------------------
+> I'm unable to verify the code below. It seems that Jessie requires that p and q are pointers to distinct memory locations. However, this is not required by Copy.
+> Is this a bug?
+> 
+
+No, this is a feature ;-). In fact, the default behavior of jessie is
+indeed to consider that the arguments of a function points to distinct
+memory locations. This usually greatly simplifies the proof obligations
+(when you write something in *p you know that *q is still the same).
+But of course this is a new implicit pre-condition, and like
+user-defined pre-conditions it must be checked for each call. 
+You can disactivate this behavior by giving the option
+-jessie-no-region to Frama-C.
+
+This is not a feature of ACSL. The separation predicate is an assumption
+made (and documented) by Jessie in the hope that it will simplify  
+treatment
+without being restrictive. The meaning of an ACSL contract where no
+\separated appears still is that the pointers do not have to be  
+separated,
+as you say.
+
+ACSL properties are used both as input and output of plug-ins. In this
+case Jessie generates the separation property, to be verified by itself
+or another plug-in.
+
+--------------------------------------------------------------------------------
+
+the "state in the previous iteration" for a loop invariant is not 
+completely defined: it is meaningless at the first iteration.
+
+However, you might want to specifying properties where the 
+initialization is unimportant.
+In such a case, you might succeeds by using ghost variables, e.g
+
+
+int i;
+//@ ghost int old_i;
+
+i = 0;
+
+
+/*@ loop invariant i > 0 ==> old_i == i -1;
+    @*/
+while (i < 10) {
+    ...
+    //@ ghost old_i = i;
+    i++;
+}
+--------------------------------------------------------------------------------------
+
+A general rule: function parameters are not modifiable l-values from the 
+caller's point of view.
+In other words, the caller cannot see that the implementation uses p as 
+a modifiable local variable.
+
+In the contract:
+
+/*@ requires \valid(p) && \valid(q);
+    assigns *\at(p,Post),p;
+   */
+int main1(int* p,int* q) ; 
+
+p is just a parameter and cannot be assigned. assigns p is useless. \at(p,Post) is the same as p.
+assigns *\at(p,Post) is wrong because equivalent to assigns *p
+
+-------------------------------------------------------------------------------------------
+
+> /*@ logic integer getelem(integer t[], integer i) = t[i];
+>   @*/
+> 
+> The error message is "not a C type"
+> Please help me if there is an error in my annotation or if it is a
+
+The issue lies in the fact that you're trying to have an array of
+of a purely logical type (integer). This is currently not possible in
+ACSL: you can not "mix" C types (arrays, pointers) with logical types
+(integers, reals, abstract data types). Thus, you have to use an array
+of int (or long, or unsigned, or whatever). Note that the index and
+the result can still be integers on the other hand:
+- in the logical world, there is no out-of-bounds error. t[i] is a valid
+  expression whatever the value of i is (in particular we have t[i] ==
+  t[i]. On the other hand, if i is too large, you won't be able to tell
+  much more about t[i] than such kind of trivial formulas)
+- t[i] gets automatically promoted to an integer when needed.
+Therefore, the you can use the following definition instead:
+/*@ logic integer getelem(int t[], integer i) = t[i]; @*/
+
+----------------------------------------------------------------------------------------------
+

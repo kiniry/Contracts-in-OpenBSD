@@ -1,7 +1,8 @@
-#Sat Aug 15 17:22:51 BST 2009
+#Sun Aug 16 14:24:11 BST 2009
 eclipse.preferences.version=1
 encoding//expl/4.c=UTF-8
-encoding//expl/ref/acsl_notes.txt=UTF-16
+encoding//expl/ref/acsl_notes.txt=UTF-8
+encoding//expl/ref/gnrl_notes.txt=UTF-8
 encoding//expl/without_code/1.c=UTF-8
 encoding//test/exr/strchrV2.c=UTF-8
 encoding//test/exr/strcmp.c=UTF-8
