@@ -1,0 +1,499 @@
+
+
+
+SAL Annotations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The most common macros and their combinations are explained in this file. They are built on primitives that are part of the Standard Annotation Language (SAL).
+
+The macros themselves are explained in Part A and most commonly used combinations are explained in more detail in Part B.  Some of the equivalent raw annotations are also listed under the macro combination.
+
+Note: Advanced annotations are not examined as they are not as commonly used. For a list see Part C at the end of this file.
+
+Indirection Description: deref, deref_opt 
+Direction Description: in, out, inout
+Buffer size units Description: ecount, bcount
+Initialization Description: full, part
+Required or optional buffer Description: opt
+Buffer size Description: size, (size, length)
+
+Combinations of these are the most common. Some combinations are not valid e.g. output cannot be used with __in and has to have size provided. Some combinations are not listed as they are very similar for description purposes of this document.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+PART A)
+
+Buffer Annotations
+
+Buffer annotations describe how functions use their pointers and can be used to detect buffer overruns. Each parameter may use zero or one buffer annotation. A buffer annotation is constructed with a leading underscore and the components described in the following sections.
+
+
+Buffer size Description 
+  (size)
+    Specifies the total size of the buffer. Use with _bcount and _ecount; do not use with _part.
+    This value is the accessible space; it may be less than the allocated space.
+ 
+  (size,length)
+    Specifies the total size and initialized length of the buffer. 
+    Use with _bcount_part and _ecount_part. The total size may be less than the allocated space.
+ 
+Buffer size units Description 
+  _bcount
+    The buffer size is in bytes.
+ 
+  _ecount
+    The buffer size is in elements.
+ 
+Direction Description 
+  _in
+    The function reads from the buffer. The caller provides the buffer and initializes it.
+ 
+  _inout
+    The function both reads from and writes to buffer. The caller provides the buffer and
+    initializes it. If used with _deref, the buffer may be reallocated by the function.
+ 
+  _out
+    The function writes to the buffer. If used on the return value or with _deref, 
+    the function provides the buffer and initializes it. Otherwise, the caller provides 
+    the buffer and the function initializes it.
+ 
+Indirection Description 
+  _deref
+    Dereference the parameter to obtain the buffer pointer. This parameter may not be NULL.
+ 
+  _deref_opt
+    Dereference the parameter to obtain the buffer pointer. This parameter can be NULL.
+ 
+Initialization Description 
+  _full
+    The function initializes the entire buffer. Use only with output buffers.
+ 
+  _part
+    The function initializes part of the buffer, and explicitly indicates how much.
+    Use only with output buffers.
+
+Required or optional buffer Description 
+  _opt
+    This parameter can be NULL.
+  
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+PART B)
+
+
+
+__in
+
+pre valid pre deref readonly 
+
+p is the buffer pointer. 
+The function will only read from the buffer. The caller must provide the buffer and initialize it. 
+The function will only read from the buffer. The caller must provide the buffer and initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+ 
+
+
+__out
+
+notnull writableTo(elementCount(1)) post valid deref notreadonly 
+
+p is the buffer pointer. 
+The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+ 
+
+
+__inout
+
+pre valid post valid deref notreadonly 
+
+p is the buffer pointer. 
+The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+ 
+
+
+__in_opt
+
+pre valid pre deref readonly except maybenull 
+
+p is the buffer pointer. 
+The function will only read from the buffer. The caller must provide the buffer and initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+ 
+
+
+__out_opt
+
+notnull writableTo(elementCount(1)) post valid deref notreadonly except maybenull 
+
+p is the buffer pointer. 
+The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+ 
+
+
+__inout_opt
+
+pre valid post valid deref notreadonly except maybenull 
+
+p is the buffer pointer. 
+The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+ 
+
+
+__in_ecount(size)
+
+pre valid pre deref readonly pre readableTo(elementCount(size)) 
+
+p is the buffer pointer. 
+The function will only read from the buffer. The caller must provide the buffer and initialize it. 
+The buffer size is an explicit element count. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+Only the buffer's total size is given.  
+
+
+
+__out_ecount(size)
+
+notnull writableTo(elementCount(size)) post valid deref notreadonly 
+
+p is the buffer pointer. 
+The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+The buffer size is an explicit element count. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+Only the buffer's total size is given.  
+
+
+
+__inout_ecount(size)
+
+notnull writableTo(elementCount(size)) post valid deref notreadonly pre valid
+
+p is the buffer pointer. 
+The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+The buffer size is an explicit element count. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+Only the buffer's total size is given.  
+
+
+
+__in_bcount(size)
+
+pre valid pre deref readonly pre readableTo(byteCount(size)) 
+
+p is the buffer pointer. 
+The function will only read from the buffer. The caller must provide the buffer and initialize it. 
+The buffer size is an explicit byte count. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+Only the buffer's total size is given.  
+
+
+
+__out_bcount(size)
+
+notnull writableTo(byteCount(size)) post valid deref notreadonly 
+
+p is the buffer pointer. 
+The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+The buffer size is an explicit byte count. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+Only the buffer's total size is given.  
+
+
+
+__inout_bcount(size)
+
+notnull writableTo(byteCount(size)) post valid deref notreadonly pre valid 
+
+p is the buffer pointer. 
+The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+The buffer size is an explicit byte count. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+Only the buffer's total size is given.  
+
+
+
+__in_ecount_opt(size)
+
+pre valid pre deref readonly pre readableTo(elementCount(size)) except maybenull 
+
+p is the buffer pointer. 
+The function will only read from the buffer. The caller must provide the buffer and initialize it. 
+The buffer size is an explicit element count. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+Only the buffer's total size is given.  
+
+
+
+__out_ecount_opt(size)
+
+notnull writableTo(elementCount(size)) post valid deref notreadonly except maybenull 
+
+p is the buffer pointer. 
+The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+The buffer size is an explicit element count. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+Only the buffer's total size is given.  
+
+
+
+__inout_ecount_opt(size)
+
+notnull writableTo(elementCount(size)) post valid deref notreadonly pre valid except maybenull 
+
+p is the buffer pointer. 
+The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+The buffer size is an explicit element count. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+Only the buffer's total size is given.  
+
+
+
+__deref_in
+
+pre valid pre deref readonly pre deref deref readonly 
+
+*p is the buffer pointer. p must not be NULL. 
+The function will only read from the buffer. The caller must provide the buffer and initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+ 
+
+
+__deref_out
+
+notnull writableTo(elementCount(1)) post readableTo(elementCount(1)) post deref notnull post deref writableTo(elementCount(1)) post deref valid deref notreadonly 
+
+*p is the buffer pointer. p must not be NULL. 
+The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+ 
+
+
+__deref_inout
+
+notnull readableTo(elementCount(1)) pre deref valid post deref valid deref notreadonly 
+
+*p is the buffer pointer. p must not be NULL. 
+The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+ 
+
+
+__deref_in_opt
+
+pre valid pre deref readonly pre deref deref readonly pre deref except maybenull 
+
+*p is the buffer pointer. p must not be NULL. 
+The function will only read from the buffer. The caller must provide the buffer and initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+ 
+
+
+__deref_out_opt
+*p is the buffer pointer. p must not be NULL. 
+The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+ 
+
+
+__deref_inout_opt
+*p is the buffer pointer. p must not be NULL. 
+The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+ 
+
+
+__deref_opt_in
+
+pre valid pre deref readonly pre deref deref readonly except maybenull 
+
+*p may be the buffer pointer. p may be NULL, in which case the rest of the annotation is ignored. 
+Usage in The function will only read from the buffer. The caller must provide the buffer and initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+ 
+
+
+__deref_opt_out
+
+*p may be the buffer pointer. p may be NULL, in which case the rest of the annotation is ignored. 
+Usage out The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+ 
+
+
+__deref_opt_inout
+
+*p may be the buffer pointer. p may be NULL, in which case the rest of the annotation is ignored. 
+Usage inout The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer must not be NULL. 
+ 
+
+
+__deref_opt_in_opt
+
+pre valid pre deref readonly pre deref deref readonly pre deref except maybenull except maybenull 
+
+*p may be the buffer pointer. p may be NULL, in which case the rest of the annotation is ignored. 
+Usage in The function will only read from the buffer. The caller must provide the buffer and initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+ 
+
+
+__deref_opt_out_opt
+
+*p may be the buffer pointer. p may be NULL, in which case the rest of the annotation is ignored. 
+Usage out The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+ 
+
+
+__deref_opt_inout_opt
+*p may be the buffer pointer. p may be NULL, in which case the rest of the annotation is ignored. 
+Usage inout The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+No buffer size is given. If the type specifies the buffer size (such as with LPSTR and LPWSTR), that amount is used. Otherwise, the buffer is one element long. Must be used with _in, _out, or _inout. 
+The type specifies how much is initialized. For instance, a function initializing an LPWSTR must NULL-terminate the string. 
+The pointer to the buffer might be NULL. It will be checked before being dereferenced. 
+ 
+
+
+__out_ecount_full(size)
+
+notnull writableTo(elementCount(size)) post valid deref notreadonly post readableTo(elementCount(size)) 
+
+p is the buffer pointer. 
+Usage out The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+The buffer size is an explicit element count. 
+Output full The function initializes the entire buffer. 
+The pointer to the buffer must not be NULL. 
+Only the buffer's total size is given.  
+
+
+
+__out_ecount_part(size,length)
+
+p is the buffer pointer. 
+Usage out The function will only write to the buffer. If used on the return value or with _deref, the function will provide the buffer and initialize it. Otherwise, the caller must provide the buffer, and the function will initialize it. 
+The buffer size is an explicit element count. 
+Output part The function initializes part of the buffer, and explicitly indicates how much. 
+The pointer to the buffer must not be NULL. 
+The buffer's total size and initialized length are given. . 
+
+
+
+__inout_ecount_full(size)
+
+p is the buffer pointer. 
+Usage inout The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+The buffer size is an explicit element count. 
+Output full The function initializes the entire buffer. 
+The pointer to the buffer must not be NULL. 
+Only the buffer's total size is given.  
+
+
+
+__inout_ecount_part(size,length)
+
+p is the buffer pointer. 
+Usage inout The function may freely read from and write to the buffer. The caller must provide the buffer and initialize it. If used with _deref, the buffer may be reallocated by the function. 
+The buffer size is an explicit element count. 
+Output part The function initializes part of the buffer, and explicitly indicates how much. 
+The pointer to the buffer must not be NULL. 
+The buffer's total size and initialized length are given. 
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+PART C)
+
+Advanced Annotations
+
+__blocksOn(resource)
+ The functions blocks on the specified resource.
+ 
+__callback
+ The function can be used as a function pointer.
+ 
+__checkReturn
+ Callers must check the return value.
+ 
+__format_string
+ The parameter is a string that contains printf-style % markers.
+ 
+__in_awcount(expr,size)
+ If the expression is true at exit, the size of the input buffer is specified in bytes. If the expression is false, the size is specified in elements.
+ 
+__nullnullterminated
+ The buffer may be accessed up to and including the first sequence of two null characters or pointers.
+ 
+__nullterminated
+ The buffer may be accessed up to and including the first null character or pointer.
+ 
+__out_awcount(expr,size)
+ If the expression is true at exit, the size of the output buffer is specified in bytes. If the expression is false, the size is specified in elements. 
+ 
+__override
+ Specifies C#-style override behavior for virtual methods.
+ 
+__reserved
+ The parameter is reserved for future use and must be zero or NULL.
+ 
+__success(expr)
+ If the expression is true at exit, the caller can rely on all guarantees specified by other annotations. If the expression is false, the caller cannot rely on the guarantees. This annotation is automatically added to functions that return an HRESULT value.
+ 
+__typefix(ctype)
+ Treat the parameter as the specified type rather than its declared type
+ 
+
+
+
+
+
+
