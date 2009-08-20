@@ -1,6 +1,6 @@
 // __deref_opt_out
 
-/*@ requires \valid(ppo);
+/*@ requires \valid(ppo) && (\valid(*ppo) || *ppo == NULL);
     behavior zero:
       assumes *ppo == NULL;
       assigns \nothing;
