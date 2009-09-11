@@ -44,17 +44,17 @@
     sub list_funcs {
         my $file = shift;
         open(INFO, $file);		# Open the file
-	my @lines = <INFO>;		# Read it into an array
-	close(INFO);			# Close the file
+		my @lines = <INFO>;		# Read it into an array
+		close(INFO);			# Close the file
         my $line;
         my @funcs;
-	foreach $line (@lines)
-	{
-  	  if ($line =~ /^\s*\w+\*?\s+\*?\*?(\w+)\s*\((.*)\);/)
-          {
-              push @funcs, $1  unless ($line =~ /\)\(/) || ($2 =~ /\"/) || ($2 =~ /\(/) || ($line =~ /\(\*/); 
-          }
-  	}
+		foreach $line (@lines)
+		{
+  	  		if ($line =~ /^\s*\w+\*?\s+\*?\*?(\w+)\s*\((.*)\);/)
+          	{
+            	push @funcs, $1  unless ($line =~ /\)\(/) || ($2 =~ /\"/) || ($2 =~ /\(/) || ($line =~ /\(\*/); 
+          	}
+  		}
         return @funcs;
     }
 
@@ -66,7 +66,6 @@
 
         push   @retval, $path if &$callback($path);
         return @retval unless (-d $path);
-
 
         # identify children
         opendir DIR, $path or return;
@@ -81,4 +80,3 @@
 
         return @retval;
     }
-

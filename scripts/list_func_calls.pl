@@ -11,23 +11,20 @@
     print scalar localtime();
     close CALLS;
     system("start notepad func_calls.txt");
-    
-
-    
+        
     sub list_funcs {
         my $file = shift;
-        
-        open(INFO, $file);		# Open the file
-	my @lines = <INFO>;		# Read it into an array
-	close(INFO);			# Close the file
+		open(INFO, $file);		# Open the file
+		my @lines = <INFO>;		# Read it into an array
+		close(INFO);			# Close the file
         my $line;
         my @funcs;
-	foreach $line (@lines)
-	{
-          if ($line =~ /\W+(\w+)\s*\((.*)\).*[\);]/)
-          {
-                my $name = $1;
-		next unless ($name =~ /[a-zA-Z]/);
+		foreach $line (@lines)
+		{
+        	if ($line =~ /\W+(\w+)\s*\((.*)\).*[\);]/)
+          	{
+            	my $name = $1;
+				next unless ($name =~ /[a-zA-Z]/);
                 next if ($name =~ /^if$/);
                 next if ($name =~ /^while$/);
                 next if ($name =~ /^for$/);
@@ -39,7 +36,7 @@
 
                 print CALLS "$name\n";   
           }
-  	}
+  		}
     }
 
     sub find_files {
@@ -48,20 +45,20 @@
 
         if (-d $path)
         {
-          # identify children
-          opendir DIR, $path or return;
-          my @files = readdir DIR;
-          closedir DIR;
+        	# identify children
+          	opendir DIR, $path or return;
+          	my @files = readdir DIR;
+          	closedir DIR;
 
-          # visit each child
-          foreach my $file (@files) {
-            next if ($file =~ /^\.\.?$/);  # skip . and ..
-            next if ($file =~ /^etc$/) || ($file =~ /^distrib$/) || ($file =~ /^CVS$/) || ($file =~ /^regress$/);
-            unless (-d "$path/$file") {
-                next unless ($file =~ /\.c$/i);
-            }
-            find_files($callback, "$path/$file");
-          }
+          	# visit each child
+          	foreach my $file (@files) {
+            	next if ($file =~ /^\.\.?$/);  # skip . and ..
+            	next if ($file =~ /^etc$/) || ($file =~ /^distrib$/) || ($file =~ /^CVS$/) || ($file =~ /^regress$/);
+            	unless (-d "$path/$file") {
+                	next unless ($file =~ /\.c$/i);
+            	}
+            	find_files($callback, "$path/$file");
+          	}
         }
         else
         {
