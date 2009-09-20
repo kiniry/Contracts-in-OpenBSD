@@ -1,11 +1,11 @@
 #!/usr/bin/perl
     use strict; use warnings;
-	my $detailed_txt_path = shift;
+	my $path = shift;
 	my $thold = shift;
-	die unless $detailed_txt_path;
+	die unless $path;
 	die unless $thold;
-	open (FILTERED, '> count_filtered.txt') or die $!;
-	open (DETAILED_COUNT, "$detailed_txt_path/detailed.txt")  or die $!;
+	open (FILTERED, "> $path/T4_Filtered_Count_Header_Func.txt") or die $!;
+	open (DETAILED_COUNT, "$path/T3_Count_Header_Func.txt")  or die $!;
 	my @funcs = <DETAILED_COUNT>;	
 	close(DETAILED_COUNT);			
 	print scalar localtime();
@@ -22,4 +22,4 @@
 	print scalar localtime();
 	
 	close FILTERED;
-	system("start notepad count_filtered.txt");
+	system("start notepad $path/T4_Filtered_Count_Header_Func.txt");

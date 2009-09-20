@@ -1,11 +1,11 @@
 #!/usr/bin/perl
     use strict; use warnings;
+    my $src_path = shift;
     my $path = shift;
-    my $includes_path = shift;
     die unless $path;
-    die unless $includes_path;
-    open (LIST_FUNCS, '> list_funcs.txt') or die $!;
-    open(HEADER_FOLDERS, "$includes_path/includes.txt")  or die $!;
+    die unless $src_path;
+    open (LIST_FUNCS, "> $path/T1_HeaderName_FuncName.txt") or die $!;
+    open(HEADER_FOLDERS, "$path/T0_HeaderFolders.txt")  or die $!;
     my @folders = <HEADER_FOLDERS>;	
     close(HEADER_FOLDERS);			
     print scalar localtime();
@@ -14,7 +14,7 @@
     foreach $folder (@folders)
     {
       $folder =~ s/\s//g;
-      my @headers = find_files(\&is_filtered_Header, "$path/$folder");
+      my @headers = find_files(\&is_filtered_Header, "$src_path/$folder");
       my $header;
       foreach $header (@headers)
       {
@@ -31,7 +31,7 @@
     print "\n";
     print scalar localtime();
     close LIST_FUNCS;
-    system("start notepad list_funcs.txt");
+    system("start notepad $path/T1_HeaderName_FuncName.txt");
 
     sub is_filtered_Header {
         my $file = shift;

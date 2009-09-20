@@ -2,9 +2,9 @@
 	use strict; use warnings;
 	my $path = shift;
 	die unless $path;
-	open (LIST, 'list_funcs.txt') or die $!;
-	open (CALLS, 'func_calls.txt')  or die $!;
-	open (COUNTS, '> detailed.txt')  or die $!;
+	open (LIST, "$path/T1_HeaderName_FuncName.txt") or die $!;
+	open (CALLS, "$path/T2_FuncCallee.txt")  or die $!;
+	open (COUNTS, "> $path/T3_Count_Header_Func.txt")  or die $!;
 	print scalar localtime();
 	my @funcs = <LIST>;	
 	close(LIST);			
@@ -24,5 +24,5 @@
 	print "\n";
 	print scalar localtime();
 	close COUNTS;
-	system("start notepad detailed.txt");
+	system("start notepad $path/T3_Count_Header_Func.txt");
    
