@@ -1,8 +1,8 @@
 /*@ requires \valid(i) && \valid(j);
-@ requires r == NULL || \valid(r);
+@ requires r == \null || \valid(r);
 @ assigns *r;
 @ behavior zero:
-@ assumes r == NULL;
+@ assumes r == \null;
 @ assigns \nothing;
 @ ensures \result == -1;
 @ behavior normal:

@@ -1,4 +1,5 @@
 // this is to demonstrate that 'strlen' is in include headers.
+#include "share/frama-c/jessie/jessie_prolog.h"
 
 /*@ requires valid_string(s);
   @ assigns \nothing;

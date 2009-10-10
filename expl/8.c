@@ -7,17 +7,15 @@ typedef struct { int a; } las;
 
 las * p;
 
-//@ghost las ** const PP=&p;
+//@ ghost las ** const PP=&p;
 
 /*@
-requires \valid(p)
-assigns p->a
+requires \valid(p);
+assigns p->a;
 @*/
-
 void f() { p->a = 5; }
 
 /*@
-assigns *PP->a
+assigns *PP->a;
 @*/
-
-void g(int * p) { f(); }
+void g() { f(); }
