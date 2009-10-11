@@ -1,6 +1,5 @@
 // string cmp: true/false
 
-#include "string_util.h"
 #include "strings.h"
 
 /*@ requires valid_string(s1) && valid_string(s2);

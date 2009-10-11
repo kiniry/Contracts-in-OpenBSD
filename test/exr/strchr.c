@@ -1,31 +1,31 @@
 // strchr - find chr in string.
-// not finalized.
+// use jessie_prolog for string utils.
+#include "strings.h"
 
-//#pragma JessieIntegerModel(modulo) //temp
 
-/*@
-   requires \valid(s);
-   requires \exists int k; 0<=k<=INT_MAX && \valid_range(s, 0, k) && s[k] == '\0';
-   terminates \exists int k; 0<=k<=INT_MAX && \valid_range(s, 0, k) && s[k] == '\0';
-   assigns \nothing;
-   behavior found:
-       assumes \exists int k; 0 <= k <= INT_MAX && \valid(s+k) && s[k] == c;
-	   ensures \valid(\result) && *\result== c;
-   behavior not_found:
-	   assumes \forall int k; 0 <= k <= INT_MAX && \valid(s+k) && s[k] != c;
-       ensures \result == NULL;
-   disjoint behaviors found, not_found;
+/*@ requires valid_string(s);
+    assigns \nothing;
+    behavior found:
+      assumes \exists int i; 0 <= i <= strlen(s) && \valid(s + i) && s[i] == c;
+      ensures *\result == c;
+    behavior not_found:
+      assumes \forall int i; 0 <= i <= strlen(s) && s[i] != c;
+      ensures \result == NULL;
+
  */
  char * strchr(const char *s, char c)
  {
-	 /*@ loop invariant \valid(s);
-	  * for not_found : loop invariant \at(*s, Pre) != c && \at(*s, Pre) != '\0';
+	 unsigned int length = strlen(s);
+	 /*@
+	     loop invariant 0 <= n <= length;
+		 loop invariant \forall unsigned int k; 0 <= k < n && s[k] != c;
+		 loop invariant \forall unsigned int k; 0 <= k < n  &&  s[n] == c ==> s[k] != c;
 	 */
-	 while (s && *s != '\0' && *s != c) {
-		 //@ invariant \at(*s, Here) != c && \at(*s, Here) != '\0';
-		 s++;
+	 for (unsigned int n =0; n < length; n++) {
+		 if (s[n] == c)
+			 return s + n;
 	 }
-	 if (s && *s == c)
-		 return s;
-	 return NULL;
+
+	  return NULL;
  }
+

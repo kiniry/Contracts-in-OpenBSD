@@ -2,8 +2,6 @@
 #ifndef STRINGS_H_
 #define STRINGS_H_
 
-#include "string_util.h"
-
 /*@ requires valid_string(s);
   @ assigns \nothing;
   @ ensures \result == strlen(s) && \forall unsigned int k; 0 <= k < \result && s[k] != '\0';

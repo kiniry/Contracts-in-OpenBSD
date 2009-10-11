@@ -1,5 +1,7 @@
 // this is to demonstrate that 'strlen' is in include headers.
-#include "share/frama-c/jessie/jessie_prolog.h"
+// beryllium version does not include "share/frama-c/jessie/jessie_prolog.h"
+// so we need to use the following command for this file.
+//  frama-c -jessie -pp-annot -cpp-extra-args " -include e:/frama-c/share/frama-c/jessie/jessie_prolog.h" e:/fr/expl/18.c
 
 /*@ requires valid_string(s);
   @ assigns \nothing;
