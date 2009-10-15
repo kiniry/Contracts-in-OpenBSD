@@ -1,0 +1,44 @@
+STRCHR(3)                 OpenBSD Programmer's Manual                STRCHR(3)
+
+NAME
+     strchr, index - locate first occurrence of a character in a string
+
+SYNOPSIS
+     #include <string.h>
+
+     char *
+     strchr(const char *s, int c);
+
+     char *
+     index(const char *s, int c);
+
+DESCRIPTION
+     The strchr() function locates the first occurrence of the character c in
+     the string s.  The terminating NUL character is considered part of the
+     string.  If c is `\0', strchr() locates the terminating `\0'.
+
+     The index() function is an old synonym for strchr().
+
+RETURN VALUES
+     The strchr() function returns a pointer to the located character or NULL
+     if the character does not appear in the string.
+
+EXAMPLES
+     After the following call to strchr(), p will point to the string "oobar":
+
+           char *p;
+           char *s = "foobar";
+
+           p = strchr(s, 'o');
+
+SEE ALSO
+     memchr(3), strcspn(3), strpbrk(3), strrchr(3), strsep(3), strspn(3),
+     strstr(3), strtok(3)
+
+STANDARDS
+     The strchr() function conforms to ANSI X3.159-1989 (``ANSI C'').
+
+     The index() function is deprecated and shouldn't be used in new code.
+
+OpenBSD 4.5                      May 31, 2007                                1
+

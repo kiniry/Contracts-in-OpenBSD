@@ -1,0 +1,61 @@
+STRCPY(3)                 OpenBSD Programmer's Manual                STRCPY(3)
+
+NAME
+     strcpy, strncpy - copy strings
+
+SYNOPSIS
+     #include <string.h>
+
+     char *
+     strcpy(char *dst, const char *src);
+
+     char *
+     strncpy(char *dst, const char *src, size_t len);
+
+DESCRIPTION
+     The strcpy() and strncpy() functions copy the string src to dst (includ-
+     ing the terminating `\0' character).
+
+     strncpy() copies not more than len characters into dst, appending `\0'
+     characters if src is less than len characters long, and not terminating
+     dst if the length of src is greater than or equal to len.
+
+RETURN VALUES
+     The strcpy() and strncpy() functions return dst.
+
+EXAMPLES
+     The following sets chararray to ``abc\0\0\0'':
+
+           (void)strncpy(chararray, "abc", 6);
+
+     The following sets chararray to ``abcdef'' and does not NUL terminate
+     chararray because the length of the source string is greater than or
+     equal to the length parameter.  strncpy() only NUL terminates the desti-
+     nation string when the length of the source string is less than the
+     length parameter.
+
+           (void)strncpy(chararray, "abcdefgh", 6);
+
+     The following copies as many characters from input to buf as will fit and
+     NUL terminates the result.  Because strncpy() does not guarantee to NUL
+     terminate the string itself, it must be done by hand.
+
+           char buf[BUFSIZ];
+
+           (void)strncpy(buf, input, sizeof(buf) - 1);
+           buf[sizeof(buf) - 1] = '\0';
+
+     Note that strlcpy(3) is a better choice for this kind of operation.  The
+     equivalent using strlcpy(3) is simply:
+
+           (void)strlcpy(buf, input, sizeof(buf));
+
+SEE ALSO
+     bcopy(3), memccpy(3), memcpy(3), memmove(3), strlcpy(3)
+
+STANDARDS
+     The strcpy() and strncpy() functions conform to ANSI X3.159-1989 (``ANSI
+     C'').
+
+OpenBSD 4.5                      May 31, 2007                                1
+

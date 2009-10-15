@@ -1,0 +1,35 @@
+STRCMP(3)                 OpenBSD Programmer's Manual                STRCMP(3)
+
+NAME
+     strcmp, strncmp - compare strings
+
+SYNOPSIS
+     #include <string.h>
+
+     int
+     strcmp(const char *s1, const char *s2);
+
+     int
+     strncmp(const char *s1, const char *s2, size_t len);
+
+DESCRIPTION
+     The strcmp() and strncmp() functions lexicographically compare the NUL-
+     terminated strings s1 and s2.
+
+RETURN VALUES
+     The strcmp() and strncmp() return an integer greater than, equal to, or
+     less than 0, according to whether the string s1 is greater than, equal
+     to, or less than the string s2.  The comparison is done using unsigned
+     characters, so that `\200' is greater than `\0'.
+
+     strncmp() compares at most len characters.
+
+SEE ALSO
+     bcmp(3), memcmp(3), strcasecmp(3), strcoll(3), strxfrm(3)
+
+STANDARDS
+     The strcmp() and strncmp() functions conform to ANSI X3.159-1989 (``ANSI
+     C'').
+
+OpenBSD 4.5                      May 31, 2007                                1
+

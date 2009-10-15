@@ -1,0 +1,74 @@
+STRTOK(3)                 OpenBSD Programmer's Manual                STRTOK(3)
+
+NAME
+     strtok, strtok_r - string token operations
+
+SYNOPSIS
+     #include <string.h>
+
+     char *
+     strtok(char *str, const char *sep);
+
+     char *
+     strtok_r(char *str, const char *sep, char **last);
+
+DESCRIPTION
+     This interface is obsoleted by strsep(3).
+
+     The strtok() function is used to isolate sequential tokens in a NUL-ter-
+     minated string, str.  These tokens are separated in the string by at
+     least one of the characters in sep.  The first time that strtok() is
+     called, str should be specified; subsequent calls, wishing to obtain fur-
+     ther tokens from the same string, should pass a null pointer instead.
+     The separator string, sep, must be supplied each time, and may change be-
+     tween calls.
+
+     The strtok_r() function is a version of strtok() that takes an explicit
+     context argument and is reentrant.
+
+     The strtok() and strtok_r() functions return a pointer to the beginning
+     of each subsequent token in the string, after replacing the separator
+     character itself with an ASCII NUL character.  When no more tokens re-
+     main, a null pointer is returned.
+
+     Since strtok() and strtok_r() modify the string, str should not point to
+     an area in the initialized data segment.
+
+EXAMPLES
+     The following will construct an array of pointers to each individual word
+     in the string s:
+
+           #define MAXTOKENS       128
+
+           char s[512], *p, *tokens[MAXTOKENS];
+           char *last;
+           int i = 0;
+
+           snprintf(s, sizeof(s), "cat dog horse cow");
+
+           for ((p = strtok_r(s, " ", &last)); p;
+               (p = strtok_r(NULL, " ", &last))) {
+                   if (i < MAXTOKENS - 1)
+                           tokens[i++] = p;
+           }
+           tokens[i] = NULL;
+
+     That is, tokens[0] will point to "cat", tokens[1] will point to "dog",
+     tokens[2] will point to "horse", and tokens[3] will point to "cow".
+
+SEE ALSO
+     memchr(3), strchr(3), strcspn(3), strpbrk(3), strrchr(3), strsep(3),
+     strspn(3), strstr(3)
+
+STANDARDS
+     The strtok() function conforms to ANSI X3.159-1989 (``ANSI C'').
+
+BUGS
+     The System V strtok(), if handed a string containing only delimiter char-
+     acters, will not alter the next starting point, so that a call to
+     strtok() with a different (or empty) delimiter string may return a non-
+     null value.  Since this implementation always alters the next starting
+     point, such a sequence of calls would always return NULL.
+
+OpenBSD 4.5                      May 31, 2007                                2
+

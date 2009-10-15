@@ -1,0 +1,37 @@
+STRSTR(3)                 OpenBSD Programmer's Manual                STRSTR(3)
+
+NAME
+     strstr, strcasestr - locate a substring in a string
+
+SYNOPSIS
+     #include <string.h>
+
+     char *
+     strstr(const char *big, const char *little);
+
+     char *
+     strcasestr(const char *big, const char *little);
+
+DESCRIPTION
+     The strstr() function locates the first occurrence of the NUL-terminated
+     string little in the NUL-terminated string big.
+
+     The strcasestr() function is similar to strstr() but ignores the case of
+     both strings.
+
+     If little is an empty string, big is returned; if little occurs nowhere
+     in big, NULL is returned; otherwise a pointer to the first character of
+     the first occurrence of little is returned.
+
+SEE ALSO
+     memchr(3), strchr(3), strcspn(3), strpbrk(3), strrchr(3), strsep(3),
+     strspn(3), strtok(3)
+
+STANDARDS
+     The strstr() function conforms to ANSI X3.159-1989 (``ANSI C'').
+
+HISTORY
+     The strcasestr() function first appeared in OpenBSD 3.8.
+
+OpenBSD 4.5                   September 19, 2007                             1
+

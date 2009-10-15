@@ -1,0 +1,41 @@
+STRDUP(3)                 OpenBSD Programmer's Manual                STRDUP(3)
+
+NAME
+     strdup - save a copy of a string
+
+SYNOPSIS
+     #include <string.h>
+
+     char *
+     strdup(const char *s);
+
+DESCRIPTION
+     The strdup() function allocates sufficient memory for a copy of the
+     string s, does the copy, and returns a pointer to it.  The pointer may
+     subsequently be used as an argument to the function free(3).
+
+     If insufficient memory is available, NULL is returned.
+
+EXAMPLES
+     The following will point p to an allocated area of memory containing the
+     NUL-terminated string "foobar":
+
+           char *p;
+
+           if ((p = strdup("foobar")) == NULL) {
+                   fprintf(stderr, "Out of memory.\n");
+                   exit(1);
+           }
+
+ERRORS
+     The strdup() function may fail and set the external variable errno for
+     any of the errors specified for the library function malloc(3).
+
+SEE ALSO
+     free(3), malloc(3), strcpy(3), strlcpy(3), strlen(3)
+
+HISTORY
+     The strdup() function first appeared in 4.4BSD.
+
+OpenBSD 4.5                      May 31, 2007                                1
+

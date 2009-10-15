@@ -1,0 +1,26 @@
+STRLEN(3)                 OpenBSD Programmer's Manual                STRLEN(3)
+
+NAME
+     strlen - find length of a string
+
+SYNOPSIS
+     #include <string.h>
+
+     size_t
+     strlen(const char *s);
+
+DESCRIPTION
+     The strlen() function computes the length of the string s.
+
+RETURN VALUES
+     The strlen() function returns the number of characters that precede the
+     terminating NUL character.
+
+SEE ALSO
+     string(3)
+
+STANDARDS
+     The strlen() function conforms to ANSI X3.159-1989 (``ANSI C'').
+
+OpenBSD 4.5                      May 31, 2007                                1
+

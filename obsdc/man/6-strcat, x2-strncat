@@ -1,0 +1,61 @@
+STRCAT(3)                 OpenBSD Programmer's Manual                STRCAT(3)
+
+NAME
+     strcat, strncat - concatenate strings
+
+SYNOPSIS
+     #include <string.h>
+
+     char *
+     strcat(char *s, const char *append);
+
+     char *
+     strncat(char *s, const char *append, size_t count);
+
+DESCRIPTION
+     The strcat() and strncat() functions append a copy of the NUL-terminated
+     string append to the end of the NUL-terminated string s, then add a ter-
+     minating `\0'.  The string s must have sufficient space to hold the re-
+     sult.
+
+     The strncat() function appends not more than count characters where space
+     for the terminating `\0' should not be included in count.
+
+RETURN VALUES
+     The strcat() and strncat() functions return the pointer s.
+
+EXAMPLES
+     The following appends ``abc'' to chararray:
+
+           char *letters = "abcdefghi";
+
+           (void)strncat(chararray, letters, 3);
+
+     The following example shows how to use strncat() safely in conjunction
+     with strncpy(3).
+
+           char buf[BUFSIZ];
+           char *input, *suffix;
+
+           (void)strncpy(buf, input, sizeof(buf) - 1);
+           buf[sizeof(buf) - 1] = '\0';
+           (void)strncat(buf, suffix, sizeof(buf) - 1 - strlen(buf));
+
+     The above will copy as many characters from input to buf as will fit.  It
+     then appends as many characters from suffix as will fit (or none if there
+     is no space).  For operations like this, the strlcpy(3) and strlcat(3)
+     functions are a better choice, as shown below.
+
+           (void)strlcpy(buf, input, sizeof(buf));
+           (void)strlcat(buf, suffix, sizeof(buf));
+
+SEE ALSO
+     bcopy(3), memccpy(3), memcpy(3), memmove(3), strcpy(3), strlcat(3),
+     strlcpy(3)
+
+STANDARDS
+     The strcat() and strncat() functions conform to ANSI X3.159-1989 (``ANSI
+     C'').
+
+OpenBSD 4.5                      May 31, 2007                                1
+

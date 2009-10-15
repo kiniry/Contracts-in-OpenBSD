@@ -1,0 +1,32 @@
+STRCASECMP(3)             OpenBSD Programmer's Manual            STRCASECMP(3)
+
+NAME
+     strcasecmp, strncasecmp - compare strings, ignoring case
+
+SYNOPSIS
+     #include <string.h>
+
+     int
+     strcasecmp(const char *s1, const char *s2);
+
+     int
+     strncasecmp(const char *s1, const char *s2, size_t len);
+
+DESCRIPTION
+     The strcasecmp() and strncasecmp() functions compare the NUL-terminated
+     strings s1 and s2 and return an integer greater than, equal to, or less
+     than 0, according to whether s1 is lexicographically greater than, equal
+     to, or less than s2 after translation of each corresponding character to
+     lower-case.  The strings themselves are not modified.  The comparison is
+     done using unsigned characters, so that `\200' is greater than `\0'.
+
+     strncasecmp() compares at most len characters.
+
+SEE ALSO
+     bcmp(3), memcmp(3), strcmp(3), strcoll(3), strxfrm(3)
+
+HISTORY
+     The strcasecmp() and strncasecmp() functions first appeared in 4.4BSD.
+
+OpenBSD 4.5                      May 31, 2007                                1
+
