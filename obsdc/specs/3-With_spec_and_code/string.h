@@ -25,7 +25,14 @@ __BEGIN_DECLS
 int	 memcmp(const void *, const void *, size_t);
 char	*strcat(char *, const char *);
 char	*strchr(const char *, int);
-int	 strcmp(const char *, const char *);
+/*@  requires valid_string(s1);
+  @  requires valid_string(s2);
+  @  assigns \nothing;
+  @  ensures (strlen(s1) == strlen(s2) && \forall integer i; 0 <= i < strlen(s1) && s1[i] == s2[i]) ==> \result == 0;
+  @  ensures \exists integer i; 0<=i< strlen(s1) && 0<=i< strlen(s2) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
+  @  ensures \exists integer i; 0<=i< strlen(s1) && 0<=i< strlen(s2) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
+ */
+int	 strcmp(const char *s1, const char *s2);
 char	*strcpy(char *, const char *);
 
 /*@ requires valid_string(s);
