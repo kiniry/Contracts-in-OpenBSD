@@ -35,7 +35,7 @@ char	*strchr(const char *, int);
       ensures \result == -1;
     behavior s2_smaller:
       assumes strlen(s2) < strlen(s1) || (strlen(s1) == strlen(s2) && \exists integer i; 0<=i<strlen(s2) && s2[i] < s1[i]);
-      ensures \result == -1;
+      ensures \result == 1;
  */
 int	 strcmp(const char *s1, const char *s2);
 char	*strcpy(char *, const char *);
@@ -47,7 +47,20 @@ char	*strcpy(char *, const char *);
 size_t	 strlen(const char *s);
 char	*strncat(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
-int	 strncmp(const char *, const char *, size_t);
+/*@ requires valid_string(s1) && valid_string(s2);
+    requires len <= strlen(s1) && len <= strlen(s2);
+    assigns \nothing;
+    behavior same_strings:
+      assumes \forall integer i; 0 <= i < len  && s1[i] == s2[i];
+      ensures \result == 0;
+    behavior s1_smaller:
+      assumes \exists integer i; 0 <=i< len && s1[i] < s2[i];
+      ensures \result == -1;
+    behavior s2_smaller:
+      assumes \exists integer i; 0<=i< len && s2[i] < s1[i];
+      ensures \result == 1;
+ */
+int	 strncmp(const char *s1, const char *s2, size_t len);
 char	*strncpy(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
 char	*strrchr(const char *, int);

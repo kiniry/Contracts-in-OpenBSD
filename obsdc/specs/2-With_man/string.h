@@ -47,7 +47,19 @@ char	*strcpy(char *, const char *);
 size_t	 strlen(const char *s);
 char	*strncat(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
-int	 strncmp(const char *, const char *, size_t);
+/*@ requires valid_string(s1) && valid_string(s2);
+    assigns \nothing;
+    behavior same_strings:
+      assumes \forall integer i; 0 <= i < minimum(len, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i];
+      ensures \result == 0;
+    behavior s1_smaller:
+      assumes \exists integer i; 0<= i < minimum(len, minimum(strlen(s1), strlen(s2))) && (unsigned char)s1[i] < (unsigned char) s2[i];
+      ensures \result < 0;
+    behavior s2_smaller:
+      assumes \exists integer i; 0<= i< minimum(len, minimum(strlen(s1), strlen(s2))) && (unsigned char) s2[i] < (unsigned char)s1[i];
+      ensures \result > 0;
+ */
+int	 strncmp(const char *s1, const char *s2, size_t len);
 char	*strncpy(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
 char	*strrchr(const char *, int);
