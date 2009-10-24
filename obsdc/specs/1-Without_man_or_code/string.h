@@ -24,7 +24,12 @@ typedef	__size_t	size_t;
 __BEGIN_DECLS
 int	 memcmp(const void *, const void *, size_t);
 char	*strcat(char *, const char *);
-char	*strchr(const char *, int);
+/*@ requires valid_string(s);
+    assigns \nothing;
+    ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c ==> \result == s+i;
+    ensures \forall integer i; 0 <= i < strlen(s) && s[i] != c ==> \result == \null;
+ */
+char	*strchr(const char *s, int c);
 /*@ requires valid_string(s1) && valid_string(s2);
     assigns \nothing;
     behavior same_strings:
@@ -38,8 +43,17 @@ char	*strchr(const char *, int);
       ensures \result == 1;
  */
 int	 strcmp(const char *s1, const char *s2);
-char	*strcpy(char *, const char *);
-
+/*@ requires valid_string(s1) && valid_string(s2);
+    assigns s1;
+    behavior normal:
+       assumes strlen(s1) >= strlen(s2);
+       ensures \forall integer i; 0 <= i < strlen(s2) && s1[i] == s2[i] && \result == s1;
+    behavior error:
+       assumes strlen(s1) < strlen(s2);
+       assigns \nothing;
+       ensures \result == \null;
+ */
+char	*strcpy(char *s1, const char *s2);
 /*@ requires valid_string(s);
   @ assigns \nothing;
   @ ensures \result == strlen(s) && \forall unsigned int k; 0 <= k < \result && s[k] != '\0';

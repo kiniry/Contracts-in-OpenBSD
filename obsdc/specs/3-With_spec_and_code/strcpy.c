@@ -1,8 +1,8 @@
-/*	$OpenBSD: strlen.c,v 1.7 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: strcpy.c,v 1.8 2005/08/08 08:05:37 espie Exp $	*/
 
-/*-
- * Copyright (c) 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*
+ * Copyright (c) 1988 Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,23 +35,34 @@
 #include <lib/libkern/libkern.h>
 #endif
 
-/*@ requires valid_string(str);
-  @ assigns \nothing;
-  @ ensures \result == strlen(str) && \forall unsigned int k; 0 <= k < \result && str[k] != '\0';
-  @*/
-size_t
-strlen(const char *str)
-{
-	const char *s;
-	//@ ghost int len = strlen(str);
-	/*@ loop assigns s;
-	    loop invariant s >= str && ((s-str) <= len);
-	    loop invariant \forall integer k; 0 < k < (s-str) && str[k] != '\0';
-	    loop invariant \forall integer k; 0 <= k < (s-str) && str[(s-str)] == '\0' ==> str[k] != '\0';
-	*/
-	for (s = str; *s; ++s)
-		;
-	//@ assert *s == '\0';
-	return (s - str);
-}
+#if defined(APIWARN)
+__warn_references(strcpy,
+    "warning: strcpy() is almost always misused, please use strlcpy()");
+#endif
 
+// ??? param names diff to man
+
+/*@ requires valid_string(to) && valid_string(from);
+    assigns to;
+    ensures \forall integer i; 0 <= i <= minimum(strlen(to), strlen(from)) && to[i] == from[i];
+    ensures \result == to;
+ */
+char *
+strcpy(char *to, const char *from)
+{
+	char *save = to;
+
+	//@ ghost char *origFrom = from;
+	//@ ghost int lenTo = strlen(to);
+	//@ ghost int lenFrom = strlen(from);
+	/*@ loop assigns to, from;
+	    loop invariant to >= save && ((to-save) <= lenTo);
+	    loop invariant from >= origFrom && ((from-origFrom) <= lenFrom);
+	    loop invariant (to-save) == (from - origFrom);
+		loop invariant 0 <= (to-save) <= minimum(lenTo, lenFrom);
+		loop invariant valid_string(to) && valid_string(from);
+		loop invariant \forall integer k; 0 <= k < (to-save) ==> save[k] == origFrom[k];
+	*/
+	for (; (*to = *from) != '\0'; ++from, ++to);
+	return(save);
+}

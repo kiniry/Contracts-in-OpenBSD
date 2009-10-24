@@ -24,7 +24,13 @@ typedef	__size_t	size_t;
 __BEGIN_DECLS
 int	 memcmp(const void *, const void *, size_t);
 char	*strcat(char *, const char *);
-char	*strchr(const char *, int);
+/*@ requires valid_string(s);
+    assigns \nothing;
+    ensures \exists integer i; 0 <= i <= strlen(s) && s[i] == c &&
+       \forall integer j; 0 <= j < i && s[j] != c ==> \result == s+i;
+    ensures \forall integer i; 0 <= i <= strlen(s) && s[i] != c ==> \result == \null;
+ */
+char	*strchr(const char *s, int c);
 /*@  requires valid_string(s1);
   @  requires valid_string(s2);
   @  assigns \nothing;
@@ -33,7 +39,12 @@ char	*strchr(const char *, int);
   @  ensures \exists integer i; 0<=i< strlen(s1) && 0<=i< strlen(s2) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
  */
 int	 strcmp(const char *s1, const char *s2);
-char	*strcpy(char *, const char *);
+/*@ requires valid_string(to) && valid_string(from);
+    assigns to;
+    ensures \forall integer i; 0 <= i <= minimum(strlen(to), strlen(from)) && to[i] == from[i];
+    ensures \result == to;
+ */
+char	*strcpy(char *to, const char *from);
 
 /*@ requires valid_string(s);
   @ assigns \nothing;
