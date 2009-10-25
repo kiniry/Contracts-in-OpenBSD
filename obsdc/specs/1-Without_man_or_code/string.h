@@ -23,7 +23,16 @@ typedef	__size_t	size_t;
 
 __BEGIN_DECLS
 int	 memcmp(const void *, const void *, size_t);
-char	*strcat(char *, const char *);
+/*@ requires valid_string(s1) && valid_string(s2);
+    assigns \nothing;
+    ensures \result == \null;
+    behavior normal:
+       assumes \valid_range(s1, 0, strlen(s1) + strlen(s2));
+       assigns s1;
+       ensures \forall integer i; 0 <= i < \at(strlen(s1), Old) && s1[i] == \old(s1[i]) && \result == s1 &&
+               \forall integer j; \old(strlen(s1)) <= j < strlen(s1) && s1[j] == s2[j];
+ */
+char	*strcat(char *s1, const char *s2);
 /*@ requires valid_string(s);
     assigns \nothing;
     ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c ==> \result == s+i;
