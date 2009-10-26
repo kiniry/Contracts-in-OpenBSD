@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcmp.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: strstr.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,20 +33,50 @@
 
 #include <string.h>
 
+// man params don't match.
+// z3 proves all except one, will get back to it.
+// couldn't prove 'first' instance returned do removed it for now.
 /*
- * Compare memory regions.
+ * Find the first occurrence of find in s.
  */
-//@ requires \valid(s1) && \valid(s2);
-int
-memcmp(const void *s1, const void *s2, size_t n)
-{
-	if (n != 0) {
-		const unsigned char *p1 = s1, *p2 = s2;
+/*@ predicate contains_string_at_i{L}(char *big, char *little, integer i) =
+  @   strlen(big + i) >= strlen(little) && \forall integer k; 0 <= k < strlen(little) && big[k + i] == little[k];
+  @*/
 
+/*@
+  @ requires valid_string(s) && valid_string(find);
+  @ assigns \nothing;
+  @ ensures strlen(find) == 0 ==> \result == s;
+  @ ensures strlen(s) < strlen(find) ==> \result == \null;
+  @ ensures strlen(s) >= strlen(find) && \exists integer i; 0 <= i <= (strlen(s) - strlen(find)) && contains_string_at_i(s, find, i)
+  @     ==> \result == s + i;
+  @ ensures strlen(s) >= strlen(find) && \forall integer i; 0 <= i < strlen(s) ==>
+  @     !contains_string_at_i(s, find, i) ==> \result == \null;
+ */
+char *
+strstr(const char *s, const char *find)
+{
+	char c, sc;
+	size_t len;
+
+	if ((c = *find++) != 0) {
+		len = strlen(find);
+		//@ ghost char *orig = s;
+		//@ ghost int lenS = strlen(s);
+		/*
+		  @ loop invariant s >= orig;
+		  @ loop invariant !contains_string_at_i(orig, find, s - orig);
+		 */
 		do {
-			if (*p1++ != *p2++)
-				return (*--p1 - *--p2);
-		} while (--n != 0);
+			//@ assigns s;
+			//@ loop invariant sc != c && *s != '\0';
+			do {
+				if ((sc = *s++) == 0)
+					return (NULL);
+			} while (sc != c);
+		} while (strncmp(s, find, len) != 0);
+		s--; //why?
+		//@ assert contains_string_at_i(s, find, 0);
 	}
-	return (0);
+	return ((char *)s);
 }

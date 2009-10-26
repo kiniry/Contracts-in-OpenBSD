@@ -1,4 +1,5 @@
-/*	$OpenBSD: memcmp.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
+/*	$OpenBSD: strncpy.c,v 1.6 2005/08/08 08:05:37 espie Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,22 +32,58 @@
  * SUCH DAMAGE.
  */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
 
 /*
- * Compare memory regions.
+ * Copy src to dst, truncating or null-padding to always copy n bytes.
+ * Return dst.
  */
-//@ requires \valid(s1) && \valid(s2);
-int
-memcmp(const void *s1, const void *s2, size_t n)
+
+// Z3, 1/64 not proven.
+
+//man: what happens if dst is shorter?
+// ??? param names diff to man
+
+/*@ requires valid_string(dst) && valid_string(src);
+    requires \valid_range(dst, 0, n);
+    assigns dst[0..n-1];
+    ensures \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
+    ensures strlen(src) < n ==> \forall integer i; strlen(src) <= i < n && dst[i] == '\0';
+    ensures \result == dst;
+ */
+char *
+strncpy(char *dst, const char *src, size_t n)
 {
 	if (n != 0) {
-		const unsigned char *p1 = s1, *p2 = s2;
-
+		char *d = dst;
+		const char *s = src;
+		//@ ghost int i = 0;
+		//@ ghost int origN = n;
+		//@ ghost int src_len = strlen(src);
+		//@ ghost int origND = n - 1;
+		/*@ loop assigns d, s, n, dst[0..origND];
+		    loop invariant n >=0;
+			loop invariant i <= origN && i <= src_len;
+			loop invariant valid_string(d) && valid_string(s);
+			loop invariant \forall integer k; 0 <= k < i ==> dst[k] == src[k];
+		*/
 		do {
-			if (*p1++ != *p2++)
-				return (*--p1 - *--p2);
+			if ((*d++ = *s++) == 0) { //@ ghost i++;
+				/* NUL pad the remaining n-1 bytes */
+				//@ ghost int j = i;
+				/*@ loop assigns d, n, dst[src_len..origND];
+					loop invariant n >= 0 && j <= origN;
+					loop invariant \forall integer k; src_len <= k < j ==> dst[k] == 0;
+				*/
+				while (--n != 0)
+					*d++ = 0; //@ ghost j++;
+				break;
+			}
 		} while (--n != 0);
 	}
-	return (0);
+	return (dst);
 }

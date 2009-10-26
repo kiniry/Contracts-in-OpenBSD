@@ -37,7 +37,7 @@
 
 /*@ requires valid_string(str);
   @ assigns \nothing;
-  @ ensures \result == strlen(str) && \forall unsigned int k; 0 <= k < \result && str[k] != '\0';
+  @ ensures str[\result] == '\0' && \forall unsigned int k; 0 <= k < \result && str[k] != '\0';
   @*/
 size_t
 strlen(const char *str)
@@ -45,9 +45,8 @@ strlen(const char *str)
 	const char *s;
 	//@ ghost int len = strlen(str);
 	/*@ loop assigns s;
-	    loop invariant s >= str && ((s-str) <= len);
-	    loop invariant \forall integer k; 0 < k < (s-str) && str[k] != '\0';
-	    loop invariant \forall integer k; 0 <= k < (s-str) && str[(s-str)] == '\0' ==> str[k] != '\0';
+	    loop invariant s >= str && 0 <= s-str <= len;
+	    loop invariant \forall integer k; 0 <= k < (s-str) ==> str[k] != '\0';
 	*/
 	for (s = str; *s; ++s)
 		;

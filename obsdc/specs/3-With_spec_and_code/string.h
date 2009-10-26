@@ -71,7 +71,14 @@ char	*strncat(char *, const char *, size_t)
 int	 strncmp(const char *s1, const char *s2, size_t n);
 char	*strncpy(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
-char	*strrchr(const char *, int);
+/*@
+  @ requires valid_string(s);
+  @ assigns \nothing;
+  @ ensures \exists integer i; 0 <= i <= strlen(s) && s[i] == c &&
+  @    (\forall integer j; i < j <= strlen(s) ==> s[j] != c) ==> \result == s+i;
+  @ ensures \forall integer i; 0 <= i <= strlen(s) && s[i] != c ==> \result == \null;
+ */
+char	*strrchr(const char *s, int c);
 char	*strstr(const char *, const char *);
 
 
