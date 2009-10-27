@@ -67,5 +67,5 @@ strcmp(const char *s1, const char *s2)
 		if (*s1++ == 0)//@ghost i++;
 			return (0);
 	//!!!! return (*(unsigned char *)s1 - *(unsigned char *)--s2);
-	return ((unsigned char)*s1 - (unsigned char)*(--s2));
+	return ((unsigned char)*s1 - (unsigned char)*(--s2)); //entered bug 306
 }

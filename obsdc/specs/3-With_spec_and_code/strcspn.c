@@ -1,8 +1,10 @@
-/*	$OpenBSD: strncmp.c,v 1.7 2005/08/08 08:05:37 espie Exp $	*/
-
-/*
- * Copyright (c) 1989 The Regents of the University of California.
+/*	$OpenBSD: strcspn.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Chris Torek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,43 +31,37 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
-#else
-#include <lib/libkern/libkern.h>
-#endif
 
+// INCOMPLETE
 
-/*@  requires valid_string(s1);
-  @  requires valid_string(s2);
-  @  assigns \nothing;
-  @  ensures (n == 0) ==> \result == 0;
-  @  ensures \forall integer i; 0 <= i <= minimum(n, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i] ==> \result == 0;
-  @  ensures \exists integer i; 0 <= i <= minimum(n, minimum(strlen(s1), strlen(s2))) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
-  @  ensures \exists integer i; 0 <= i <= minimum(n, minimum(strlen(s1), strlen(s2))) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
+/*
+ * Span the complement of string s2.
  */
-int
-strncmp(const char *s1, const char *s2, size_t n)
+/*@
+  @ requires valid_string(s1) && valid_string(s2);
+  @ assigns \nothing;
+  @ ensures \exists integer i; 0 <= i < strlen(s1) &&
+  @         \forall integer j; 0 <= j < strlen(s2) &&
+  @          s2[j] != s1[i] ==> \result == i + 1;
+ */
+size_t
+strcspn(const char *s1, const char *s2)
 {
-	if (n == 0)
-		return (0);
-	//@ ghost char *orig1 = s1;
-	//@ ghost char *orig2 = s2;
-	//@ ghost int len1 = strlen(s1);
-	//@ ghost int len2 = strlen(s2);
-	//@ ghost int len = n;
-	//@ ghost int i = 0;
-	/*@ loop assigns s1, s2, n;
-		loop invariant n >= 0 && 0 <= i <= minimum(len, minimum(len1, len2));
-		loop invariant valid_string(s1) && valid_string(s2);
-		loop invariant \forall integer k; 0 <= k < i ==> orig1[k] == orig2[k];
-	*/
-	do {
-		if (*s1 != *s2++)
-			return ((unsigned char)*s1 - (unsigned char)*(--s2)); //return (*(unsigned char *)s1 - *(unsigned char *)--s2);
-		//entered bug 306
-		if (*s1++ == 0)
-			break;
-	} while (--n != 0); //@ ghost i++;
-	return (0);
+	const char *p, *spanp;
+	char c, sc;
+
+	/*
+	 * Stop as soon as we find any character from s2.  Note that there
+	 * must be a NUL in s2; it suffices to stop when we find that, too.
+	 */
+	for (p = s1;;) {
+		c = *p++;
+		spanp = s2;
+		do {
+			if ((sc = *spanp++) == c)
+				return (p - 1 - s1);
+		} while (sc != 0);
+	}
+	/* NOTREACHED */
 }

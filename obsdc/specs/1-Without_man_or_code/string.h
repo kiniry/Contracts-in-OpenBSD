@@ -22,7 +22,6 @@ typedef	__size_t	size_t;
 #endif
 
 __BEGIN_DECLS
-int	 memcmp(const void *s1, const void *s2, size_t n);
 /*@ requires valid_string(s1) && valid_string(s2);
     assigns \nothing;
     ensures \result == \null;
@@ -63,12 +62,23 @@ int	 strcmp(const char *s1, const char *s2);
        ensures \result == \null;
  */
 char	*strcpy(char *s1, const char *s2);
+// not clear what this does.
+size_t	 strcspn(const char *, const char *);
 /*@ requires valid_string(s);
   @ assigns \nothing;
   @ ensures \result == strlen(s) && \forall unsigned int k; 0 <= k < \result && s[k] != '\0';
   @*/
 size_t	 strlen(const char *s);
-char	*strncat(char *, const char *, size_t)
+/*@
+  requires \valid_range(s1, 0, minimum(n, strlen(s2)) -1) && valid_string(s2);
+  assigns s1[0..minimum(n, strlen(s2)) - 1];
+  ensures strlen(s1) == \old(strlen(s1)) + minimum(n, strlen(s2));
+  ensures \forall integer k; 0 <= k < \old(strlen(s1)) ==> s1[k] == \old(s1[k]);
+  ensures \forall integer k; \old(strlen(s1)) <= k < minimum(n, strlen(s2)) ==>
+    s1[k] == s2[k-\old(strlen(s1))];
+  ensures \result == s1;
+ */
+char	*strncat(char *s1, const char *s2, size_t n)
 		__attribute__ ((__bounded__(__string__,1,3)));
 /*@ requires valid_string(s1) && valid_string(s2);
     requires len <= strlen(s1) && len <= strlen(s2);
@@ -96,6 +106,8 @@ int	 strncmp(const char *s1, const char *s2, size_t len);
  */
 char	*strncpy(char *s1, const char *s2, size_t n)
 		__attribute__ ((__bounded__(__string__,1,3)));
+// not clear what this does.
+char	*strpbrk(const char *, const char *);
 /*@
   @ requires valid_string(s);
   @ assigns \nothing;
@@ -114,30 +126,6 @@ char	*strrchr(const char *s, int n);
   @   \exists integer k; i <= k <= strlen(s2) && s1[k] != s2[k] ==> \result == \null;
  */
 char	*strstr(const char *s1, const char *s2);
-
-#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
-/*@ requires valid_string(s1) && valid_string(s2);
-    assigns \nothing;
-    behavior same_strings:
-      assumes strlen(s1) == strlen(s2) && \forall integer i; 0 <= i < strlen(s1) &&
-        ((s1[i] - s2[i] == 0) || (s1[i] - s2[i] == 32) || (s1[i] - s2[i] == -32));
-      ensures \result == 0;
-    behavior s1_smaller:
-      assumes \exists integer i; 0<=i<strlen(s1) && s1[i] < s2[i] && (s1[i] - s2[i]) != -32;
-      ensures \result == -1;
-    behavior s2_smaller:
-      assumes \exists integer i; 0<=i<strlen(s2) && s2[i] < s1[i] && (s1[i] - s2[i]) != 32;
-      ensures \result == 1;
- */
-int	 strcasecmp(const char *s1, const char *s2);
-int	 strncasecmp(const char *, const char *, size_t);
-/*@ requires valid_string(s);
-  @ assigns \nothing;
-  @ ensures valid_string(\result) && strlen(s) == strlen(\result);
-  @ ensures \forall integer i; 0 <= i <= strlen(\result) && \result[i] == s[i];
- */
-char	*strdup(const char *s);
-#endif
 
 
 #endif /* _STRING_H_ */

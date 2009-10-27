@@ -1,8 +1,10 @@
-/*	$OpenBSD: strncmp.c,v 1.7 2005/08/08 08:05:37 espie Exp $	*/
-
-/*
- * Copyright (c) 1989 The Regents of the University of California.
+/*	$OpenBSD: strncat.c,v 1.5 2005/08/08 08:05:37 espie Exp $ */
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Chris Torek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,43 +31,41 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
-#else
-#include <lib/libkern/libkern.h>
-#endif
 
-
-/*@  requires valid_string(s1);
-  @  requires valid_string(s2);
-  @  assigns \nothing;
-  @  ensures (n == 0) ==> \result == 0;
-  @  ensures \forall integer i; 0 <= i <= minimum(n, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i] ==> \result == 0;
-  @  ensures \exists integer i; 0 <= i <= minimum(n, minimum(strlen(s1), strlen(s2))) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
-  @  ensures \exists integer i; 0 <= i <= minimum(n, minimum(strlen(s1), strlen(s2))) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
+/*
+ * Concatenate src on the end of dst.  At most strlen(dst)+n+1 bytes
+ * are written at dst (at most n+1 bytes being appended).  Return dst.
  */
-int
-strncmp(const char *s1, const char *s2, size_t n)
+
+// INCOMPLETE
+
+// man params don't match again.
+/*@
+  requires \valid_range(dst, 0, minimum(n, strlen(src))) && valid_string(src);
+  assigns dst;
+  ensures strlen(dst) == \old(strlen(dst)) + minimum(n, strlen(src)) + 1;
+  ensures \forall integer k; 0 <= k < \old(strlen(dst)) ==> dst[k] == \old(dst[k]);
+  ensures \forall integer k; \old(strlen(dst)) <= k < minimum(n, strlen(src)) ==>
+    dst[k] == src[k-\old(strlen(dst))];
+  ensures dst[minimum(n, strlen(src)) + 1] == '\0';
+  ensures \result == dst;
+ */
+char *
+strncat(char *dst, const char *src, size_t n)
 {
-	if (n == 0)
-		return (0);
-	//@ ghost char *orig1 = s1;
-	//@ ghost char *orig2 = s2;
-	//@ ghost int len1 = strlen(s1);
-	//@ ghost int len2 = strlen(s2);
-	//@ ghost int len = n;
-	//@ ghost int i = 0;
-	/*@ loop assigns s1, s2, n;
-		loop invariant n >= 0 && 0 <= i <= minimum(len, minimum(len1, len2));
-		loop invariant valid_string(s1) && valid_string(s2);
-		loop invariant \forall integer k; 0 <= k < i ==> orig1[k] == orig2[k];
-	*/
-	do {
-		if (*s1 != *s2++)
-			return ((unsigned char)*s1 - (unsigned char)*(--s2)); //return (*(unsigned char *)s1 - *(unsigned char *)--s2);
-		//entered bug 306
-		if (*s1++ == 0)
-			break;
-	} while (--n != 0); //@ ghost i++;
-	return (0);
+	if (n != 0) {
+		char *d = dst;
+		const char *s = src;
+
+		while (*d != 0)
+			d++;
+		do {
+			if ((*d = *s++) == 0)
+				break;
+			d++;
+		} while (--n != 0);
+		*d = 0;
+	}
+	return (dst);
 }

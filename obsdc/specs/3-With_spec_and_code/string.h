@@ -52,6 +52,14 @@ int	 strcmp(const char *s1, const char *s2);
     ensures \result == to;
  */
 char	*strcpy(char *to, const char *from);
+/*@
+  @ requires valid_string(s1) && valid_string(s2);
+  @ assigns \nothing;
+  @ ensures \exists integer i; 0 <= i < strlen(s1) &&
+  @         \forall integer j; 0 <= j < strlen(s2) &&
+  @          s2[j] != s1[i] ==> \result == i + 1;
+ */
+size_t strcspn(const char *s1, const char *s2);
 
 /*@ requires valid_string(s);
   @ assigns \nothing;
@@ -71,6 +79,17 @@ char	*strncat(char *, const char *, size_t)
 int	 strncmp(const char *s1, const char *s2, size_t n);
 char	*strncpy(char *, const char *, size_t)
 		__attribute__ ((__bounded__(__string__,1,3)));
+/*@
+  @ requires valid_string(s1);
+  @ assigns \nothing;
+  @ ensures \exists integer i; 0 <= i < strlen(s2) &&
+  @         \exists integer j; 0 <= j < strlen(s1) &&
+  @          s2[i] == s1[j] ==> \result == s1+j;
+  @ ensures \forall integer i; 0 <= i < strlen(s2) &&
+  @         \forall integer j; 0 <= j < strlen(s1) &&
+  @          s2[i] != s1[j] ==> \result == \null;
+ */
+char * strpbrk(const char *s1, const char *s2);
 /*@
   @ requires valid_string(s);
   @ assigns \nothing;

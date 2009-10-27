@@ -57,13 +57,30 @@ int	 strcmp(const char *s1, const char *s2);
     ensures \result == dst;
  */
 char	*strcpy(char *dst, const char *src);
-
+/*@
+  @ requires valid_string(s) && valid_string(charset);
+  @ assigns \nothing;
+  @ ensures \exists integer i; 0 <= i < strlen(s) &&
+  @         \forall integer j; 0 <= j < strlen(charset) &&
+  @          charset[j] != s[i] ==> \result == i + 1;
+ */
+size_t	 strcspn(const char *s, const char *charset);
 /*@ requires valid_string(s);
   @ assigns \nothing;
   @ ensures \valid_range(s, 0, \result) && s[\result] == '\0' && \forall unsigned int k; 0 <= k < \result && s[k] != '\0';
   @*/
 size_t	 strlen(const char *s);
-char	*strncat(char *, const char *, size_t)
+/*@
+  requires \valid_range(s, 0, minimum(count, strlen(append))) && valid_string(append);
+  assigns s[0..minimum(count, strlen(append)) - 1];
+  ensures strlen(s) == \old(strlen(s)) + minimum(count, strlen(append)) + 1;
+  ensures \forall integer k; 0 <= k < \old(strlen(s)) ==> s[k] == \old(s[k]);
+  ensures \forall integer k; \old(strlen(s)) <= k < minimum(count, strlen(append)) ==>
+    s[k] == append[k-\old(strlen(s))];
+  ensures s[minimum(count, strlen(append)) + 1] == '\0';
+  ensures \result == s;
+ */
+char	*strncat(char *s, const char *append, size_t count)
 		__attribute__ ((__bounded__(__string__,1,3)));
 /*@ requires valid_string(s1) && valid_string(s2);
     assigns \nothing;
@@ -88,6 +105,17 @@ int	 strncmp(const char *s1, const char *s2, size_t len);
  */
 char	*strncpy(char *dst, const char *src, size_t len)
 		__attribute__ ((__bounded__(__string__,1,3)));
+/*@
+  @ requires valid_string(s);
+  @ assigns \nothing;
+  @ ensures \exists integer i; 0 <= i < strlen(charset) &&
+  @         \exists integer j; 0 <= j < strlen(s) &&
+  @          charset[i] == s[j] ==> \result == s+j;
+  @ ensures \forall integer i; 0 <= i < strlen(charset) &&
+  @         \forall integer j; 0 <= j < strlen(s) &&
+  @          charset[i] != s[j] ==> \result == \null;
+ */
+char	*strpbrk(const char *s, const char *charset);
 /*@
   @ requires valid_string(s);
   @ assigns \nothing;
