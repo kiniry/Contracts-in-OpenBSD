@@ -164,5 +164,11 @@ int	 strncasecmp(const char *, const char *, size_t);
 char	*strdup(const char *s);
 #endif
 
-
+#if __BSD_VISIBLE
+size_t	 strlcat(char *, const char *, size_t)
+		__attribute__ ((__bounded__(__string__,1,3)));
+size_t	 strlcpy(char *, const char *, size_t)
+		__attribute__ ((__bounded__(__string__,1,3)));
+#endif
+__END_DECLS
 #endif /* _STRING_H_ */

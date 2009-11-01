@@ -39,17 +39,19 @@
 #endif
 
 
-// Proven by Z3.
-#pragma JessieIntegerModel(exact)
+// Proven by Simplify.
+
+// Code change! Bug 306
+
 /*
  * Compare strings.
  */
 /*@  requires valid_string(s1);
   @  requires valid_string(s2);
   @  assigns \nothing;
-  @  ensures (strlen(s1) == strlen(s2) && \forall integer i; 0 <= i < strlen(s1) && s1[i] == s2[i]) ==> \result == 0;
-  @  ensures \exists integer i; 0<=i< strlen(s1) && 0<=i< strlen(s2) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
-  @  ensures \exists integer i; 0<=i< strlen(s1) && 0<=i< strlen(s2) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
+  @  ensures (strlen(s1) == strlen(s2) && \forall integer i; 0 <= i <= strlen(s1) && s1[i] == s2[i]) ==> \result == 0;
+  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
+  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
  */
 int
 strcmp(const char *s1, const char *s2)
@@ -57,11 +59,12 @@ strcmp(const char *s1, const char *s2)
 	//@ ghost char *orig1 = s1;
 	//@ ghost char *orig2 = s2;
 	//@ ghost int i = 0;
+	//@ ghost int len1 = strlen(s1);
+    //@ ghost int len2 = strlen(s2);
 	/*@ loop assigns s1, s2;
 	    loop invariant valid_string(s1) && valid_string(s2);
-	    loop invariant \forall integer k; 0 <= k < i && *s1 == *s2 ==> orig1[k] == orig2[k];
-	    loop invariant \forall integer k; 0 <= k < i && *s1 != *s2 ==> orig1[k] == orig2[k];
-	    loop invariant \forall integer k; 0 <= k < i && *s1 == 0 ==> orig1[k] == orig2[k];
+	    loop invariant 0 <= i && i <= len1 && i <= len2;
+	    loop invariant \forall integer k; 0 <= k < i ==> orig1[k] == orig2[k];
 	*/
 	while (*s1 == *s2++)
 		if (*s1++ == 0)//@ghost i++;

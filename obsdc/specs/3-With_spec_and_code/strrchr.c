@@ -38,12 +38,16 @@
 #define NULL	((char *)0)
 #endif
 
+// Proven by Simplify.
+
+// (doc?) bug: '\0' ==> null.
 /*@
   @ requires valid_string(s);
   @ assigns \nothing;
-  @ ensures \exists integer i; 0 <= i <= strlen(s) && s[i] == c &&
-  @    (\forall integer j; i < j <= strlen(s) ==> s[j] != c) ==> \result == s+i;
-  @ ensures \forall integer i; 0 <= i <= strlen(s) && s[i] != c ==> \result == \null;
+  @ ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c &&
+  @    (\forall integer j; i < j < strlen(s) ==> s[j] != c) ==> \result == s+i;
+  @ ensures (\forall integer i; 0 <= i < strlen(s) ==> s[i] != c) ==> \result == \null;
+  @ ensures '\0' == c ==> \result == \null;
  */
 char *
 strrchr(const char *s, int c)

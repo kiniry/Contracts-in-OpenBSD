@@ -35,14 +35,19 @@
 #include <lib/libkern/libkern.h>
 #endif
 
+// Proven by Simplify
+
+// Code change! Bug 306
+// Param n does not match man.
+// n == 0 ==> 0 not mentioned in man.
 
 /*@  requires valid_string(s1);
   @  requires valid_string(s2);
   @  assigns \nothing;
   @  ensures (n == 0) ==> \result == 0;
-  @  ensures \forall integer i; 0 <= i <= minimum(n, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i] ==> \result == 0;
-  @  ensures \exists integer i; 0 <= i <= minimum(n, minimum(strlen(s1), strlen(s2))) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
-  @  ensures \exists integer i; 0 <= i <= minimum(n, minimum(strlen(s1), strlen(s2))) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
+  @  ensures \forall integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i] ==> \result == 0;
+  @  ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
+  @  ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
  */
 int
 strncmp(const char *s1, const char *s2, size_t n)
@@ -53,7 +58,7 @@ strncmp(const char *s1, const char *s2, size_t n)
 	//@ ghost char *orig2 = s2;
 	//@ ghost int len1 = strlen(s1);
 	//@ ghost int len2 = strlen(s2);
-	//@ ghost int len = n;
+	//@ ghost int len = n - 1;
 	//@ ghost int i = 0;
 	/*@ loop assigns s1, s2, n;
 		loop invariant n >= 0 && 0 <= i <= minimum(len, minimum(len1, len2));
@@ -62,8 +67,7 @@ strncmp(const char *s1, const char *s2, size_t n)
 	*/
 	do {
 		if (*s1 != *s2++)
-			return ((unsigned char)*s1 - (unsigned char)*(--s2)); //return (*(unsigned char *)s1 - *(unsigned char *)--s2);
-		//entered bug 306
+			return ((unsigned char)*s1 - (unsigned char)*(--s2)); //entered bug 306 : return (*(unsigned char *)s1 - *(unsigned char *)--s2);
 		if (*s1++ == 0)
 			break;
 	} while (--n != 0); //@ ghost i++;

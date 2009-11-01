@@ -46,7 +46,7 @@
 // Z3, 1/64 not proven.
 
 //man: what happens if dst is shorter?
-// ??? param names diff to man
+// param n different in man
 
 /*@ requires valid_string(dst) && valid_string(src);
     requires \valid_range(dst, 0, n);

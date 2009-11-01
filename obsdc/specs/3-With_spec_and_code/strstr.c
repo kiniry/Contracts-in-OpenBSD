@@ -33,50 +33,74 @@
 
 #include <string.h>
 
+// X Z3 proves all but b5 1 0f 3 posts.
+
 // man params don't match.
-// z3 proves all except one, will get back to it.
-// couldn't prove 'first' instance returned do removed it for now.
+// note why?
+
+// not done yet: 'first' occurence.
+
 /*
  * Find the first occurrence of find in s.
  */
 /*@ predicate contains_string_at_i{L}(char *big, char *little, integer i) =
-  @   strlen(big + i) >= strlen(little) && \forall integer k; 0 <= k < strlen(little) && big[k + i] == little[k];
+  @   \forall integer k; 0 <= k && k < strlen(little) && (k + i) < strlen(big) && big[k + i] == little[k];
   @*/
 
 /*@
   @ requires valid_string(s) && valid_string(find);
   @ assigns \nothing;
-  @ ensures strlen(find) == 0 ==> \result == s;
-  @ ensures strlen(s) < strlen(find) ==> \result == \null;
-  @ ensures strlen(s) >= strlen(find) && \exists integer i; 0 <= i <= (strlen(s) - strlen(find)) && contains_string_at_i(s, find, i)
-  @     ==> \result == s + i;
-  @ ensures strlen(s) >= strlen(find) && \forall integer i; 0 <= i < strlen(s) ==>
-  @     !contains_string_at_i(s, find, i) ==> \result == \null;
+  @ behavior b1:
+  @   assumes strlen(find) == 0;
+  @   ensures \result == s;
+  @ behavior b2:
+  @   assumes strlen(s) < strlen(find);
+  @   ensures \result == \null;
+  @ behavior b3:
+  @   assumes strlen(s) >= strlen(find);
+  @   assumes \exists integer i; 0 <= i <= (strlen(s) - strlen(find)) && contains_string_at_i(s, find, i);
+  @   ensures contains_string_at_i(\result, find, 0);
+  @ behavior b4:
+  @   assumes \forall integer i; 0 <= i < strlen(s) && s[i] != *find;
+  @   ensures \result == \null;
+  @ behavior b5:
+  @   assumes !(\exists integer i; 0 <= i < strlen(s) && contains_string_at_i(s, find, i));
+  @   ensures \result == \null;
  */
 char *
 strstr(const char *s, const char *find)
 {
 	char c, sc;
 	size_t len;
-
+	//@ ghost char *origFind = find;
 	if ((c = *find++) != 0) {
 		len = strlen(find);
 		//@ ghost char *orig = s;
 		//@ ghost int lenS = strlen(s);
-		/*
+		//@ ghost int ind = 0;
+		/*@
+		  @ loop assigns s;
 		  @ loop invariant s >= orig;
-		  @ loop invariant !contains_string_at_i(orig, find, s - orig);
+		  @ loop invariant 0 <= ind <= lenS;
+		  @ loop invariant \forall integer k; 0 <= k < ind ==> !contains_string_at_i(orig, origFind, k);
 		 */
 		do {
-			//@ assigns s;
-			//@ loop invariant sc != c && *s != '\0';
+			//@ ghost char *p = s;
+			/*@ loop assigns s;
+			  @ loop invariant sc != c && *s != '\0';
+			  @ loop invariant 0 <= ind <= lenS;
+			  @ loop invariant \forall integer j; 0 <= j < (s-p) ==> p[j] != *origFind;
+			  @ loop invariant \forall integer j; 0 <= j < (s-p) ==> p[j] != 0;
+			  @ loop invariant \forall integer k; 0 <= k < ind ==> !contains_string_at_i(orig, origFind, k);
+			*/
 			do {
-				if ((sc = *s++) == 0)
-					return (NULL);
+				if ((sc = *s++) == 0) //ghost ind++;
+					/*@ assert \forall integer k; 0 <= k <= lenS && !contains_string_at_i(orig, origFind, k); */ return (NULL);
 			} while (sc != c);
 		} while (strncmp(s, find, len) != 0);
 		s--; //why?
-		//@ assert contains_string_at_i(s, find, 0);
+		//@ assert contains_string_at_i(s, origFind, 0);
+		//@ assert contains_string_at_i(orig, origFind, s-orig);
 	}
 	return ((char *)s);
 }

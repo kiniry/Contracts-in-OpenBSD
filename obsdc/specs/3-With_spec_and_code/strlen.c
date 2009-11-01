@@ -35,9 +35,13 @@
 #include <lib/libkern/libkern.h>
 #endif
 
+// Proven by Simplify.
+
+// param name mismatch with man.
+
 /*@ requires valid_string(str);
   @ assigns \nothing;
-  @ ensures str[\result] == '\0' && \forall unsigned int k; 0 <= k < \result && str[k] != '\0';
+  @ ensures str[\result] == '\0' && \forall integer k; 0 <= k < \result ==> str[k] != '\0';
   @*/
 size_t
 strlen(const char *str)

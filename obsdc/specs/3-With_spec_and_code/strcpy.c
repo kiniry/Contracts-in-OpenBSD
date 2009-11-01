@@ -40,11 +40,11 @@ __warn_references(strcpy,
     "warning: strcpy() is almost always misused, please use strlcpy()");
 #endif
 
-// ??? param names diff to man
+// Params don't match man.
 
-/*@ requires valid_string(to) && valid_string(from);
+/*@ requires \valid(to) && valid_string(from);
     assigns to;
-    ensures \forall integer i; 0 <= i <= minimum(strlen(to), strlen(from)) && to[i] == from[i];
+    ensures \forall integer i; 0 <= i <= strlen(from) && to[i] == from[i];
     ensures \result == to;
  */
 char *
@@ -53,14 +53,11 @@ strcpy(char *to, const char *from)
 	char *save = to;
 
 	//@ ghost char *origFrom = from;
-	//@ ghost int lenTo = strlen(to);
 	//@ ghost int lenFrom = strlen(from);
 	/*@ loop assigns to, from;
-	    loop invariant to >= save && ((to-save) <= lenTo);
 	    loop invariant from >= origFrom && ((from-origFrom) <= lenFrom);
 	    loop invariant (to-save) == (from - origFrom);
-		loop invariant 0 <= (to-save) <= minimum(lenTo, lenFrom);
-		loop invariant valid_string(to) && valid_string(from);
+		loop invariant \valid(to) && valid_string(from);
 		loop invariant \forall integer k; 0 <= k < (to-save) ==> save[k] == origFrom[k];
 	*/
 	for (; (*to = *from) != '\0'; ++from, ++to);

@@ -38,30 +38,48 @@
  * are written at dst (at most n+1 bytes being appended).  Return dst.
  */
 
-// INCOMPLETE
+// in progress
 
-// man params don't match again.
+// man params don't match.
+
 /*@
-  requires \valid_range(dst, 0, minimum(n, strlen(src))) && valid_string(src);
+  requires valid_string(src) && valid_string(dst) && \valid_range(dst, 0, strlen(dst) + minimum(n, strlen(src)));
   assigns dst;
-  ensures strlen(dst) == \old(strlen(dst)) + minimum(n, strlen(src)) + 1;
+  ensures strlen(dst) == \old(strlen(dst)) + minimum(n, strlen(src));
   ensures \forall integer k; 0 <= k < \old(strlen(dst)) ==> dst[k] == \old(dst[k]);
-  ensures \forall integer k; \old(strlen(dst)) <= k < minimum(n, strlen(src)) ==>
-    dst[k] == src[k-\old(strlen(dst))];
-  ensures dst[minimum(n, strlen(src)) + 1] == '\0';
+  ensures \forall integer k; 0 <= k < minimum(n, strlen(src)) ==>
+    dst[k + \old(strlen(dst))] == src[k];
+  ensures dst[strlen(dst)] == '\0';
   ensures \result == dst;
  */
 char *
 strncat(char *dst, const char *src, size_t n)
 {
 	if (n != 0) {
+		//@ghost int lenSrc = strlen(src);
+		//@ghost int lenDst = strlen(dst);
 		char *d = dst;
 		const char *s = src;
-
+		/*@ loop assigns d;
+		  @ loop invariant valid_string(d) && (d - dst) <= lenDst;
+		 */
 		while (*d != 0)
 			d++;
+		//@ ghost int j = d - dst;
+		//@ ghost char *ps = d;
+		//@ ghost int it = 0;
+		//@ ghost int origN = n;
+		//@ assert *d == 0;
+		/*@ loop assigns d, s, n;
+		  @ loop invariant valid_string(d) && valid_string(s);
+		  @ loop invariant n > 0;
+		  @ loop invariant (s-ps) == it && (s-src) <= lenSrc;
+		  @ loop invariant (d-dst) == it && (d-dst) <= lenDst;
+		  @ loop invariant 0 <= it <= minimum(origN, lenSrc);
+		  @ loop invariant \forall integer i; 0 <= i < it ==> dst[j + i] == src[i];
+		 */
 		do {
-			if ((*d = *s++) == 0)
+			if ((*d = *s++) == 0) //@ ghost it++;
 				break;
 			d++;
 		} while (--n != 0);

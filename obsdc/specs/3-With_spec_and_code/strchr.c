@@ -38,15 +38,15 @@
 #define NULL	((char *)0)
 #endif
 
-// ???? The terminating NUL character is considered part of the
+// Proven by Simplify
+// Doc Bug ? : The terminating NUL character is considered part of the
 //     string.  If c is `\0', strchr() locates the terminating `\0'.
-
 
 /*@ requires valid_string(s);
     assigns \nothing;
-    ensures \exists integer i; 0 <= i <= strlen(s) && s[i] == c ==>
+    ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c ==>
        \forall integer j; 0 <= j < i && s[j] != c ==> \result == s+i;
-    ensures \forall integer i; 0 <= i <= strlen(s) && s[i] != c ==> \result == \null;
+    ensures \forall integer i; 0 <= i < strlen(s) && s[i] != c ==> \result == \null;
  */
 char *
 strchr(const char *s, int c)

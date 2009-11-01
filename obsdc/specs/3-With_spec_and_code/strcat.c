@@ -40,14 +40,15 @@ __warn_references(strcat,
     "warning: strcat() is almost always misused, please use strlcat()");
 #endif
 
+// Proven by Simplify
 
-// man not clear about appending a \0. Also, man is confusing as it mixes N version. e.g. copies none?
+// man is confusing as it mixes N version.
 
 /*@ requires valid_string(s) && valid_string(append) && \valid_range(s, 0, strlen(s) + strlen(append));
     assigns s;
     ensures strlen(s) == \old(strlen(s) + strlen(append));
-    ensures \forall integer i; 0 <= i < \at(strlen(s), Old) && s[i] == \old(s[i]);
-    ensures \forall integer j; \old(strlen(s)) <= j < strlen(s) && s[j] == append[j];
+    ensures \forall integer i; 0 <= i < \old(strlen(s)) ==> s[i] == \old(s[i]);
+    ensures \forall integer j; \old(strlen(s)) <= j <= strlen(s) ==> s[j] == append[j];
     ensures  \result == s;
  */
 char *
