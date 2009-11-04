@@ -33,19 +33,13 @@
 
 #include <string.h>
 
-// X Z3 proves all but b5 1 0f 3 posts.
+// Proven by Z3.
 
 // man params don't match.
-// note why?
-
-// not done yet: 'first' occurence.
 
 /*
  * Find the first occurrence of find in s.
  */
-/*@ predicate contains_string_at_i{L}(char *big, char *little, integer i) =
-  @   \forall integer k; 0 <= k && k < strlen(little) && (k + i) < strlen(big) && big[k + i] == little[k];
-  @*/
 
 /*@
   @ requires valid_string(s) && valid_string(find);
@@ -58,13 +52,15 @@
   @   ensures \result == \null;
   @ behavior b3:
   @   assumes strlen(s) >= strlen(find);
-  @   assumes \exists integer i; 0 <= i <= (strlen(s) - strlen(find)) && contains_string_at_i(s, find, i);
+  @   assumes \exists integer i; 0 <= i <= (strlen(s) - strlen(find)) && contains_string_at_i(s, find, i) &&
+                 \forall integer j; 0 <= j < i ==> !contains_string_at_i(s, find, j);
   @   ensures contains_string_at_i(\result, find, 0);
   @ behavior b4:
   @   assumes \forall integer i; 0 <= i < strlen(s) && s[i] != *find;
   @   ensures \result == \null;
   @ behavior b5:
-  @   assumes !(\exists integer i; 0 <= i < strlen(s) && contains_string_at_i(s, find, i));
+  @   assumes strlen(s) >= strlen(find) && strlen(find) > 0;
+  @   assumes \forall integer i; 0 <= i < strlen(s) && !contains_string_at_i(s, find, i);
   @   ensures \result == \null;
  */
 char *
@@ -95,10 +91,10 @@ strstr(const char *s, const char *find)
 			*/
 			do {
 				if ((sc = *s++) == 0) //ghost ind++;
-					/*@ assert \forall integer k; 0 <= k <= lenS && !contains_string_at_i(orig, origFind, k); */ return (NULL);
+					/*@ assert \forall integer k; 0 <= k < lenS && !contains_string_at_i(orig, origFind, k); */ return (NULL);
 			} while (sc != c);
 		} while (strncmp(s, find, len) != 0);
-		s--; //why?
+		s--;
 		//@ assert contains_string_at_i(s, origFind, 0);
 		//@ assert contains_string_at_i(orig, origFind, s-orig);
 	}

@@ -37,7 +37,7 @@
 
 // Proven by Simplify
 
-// Code change! Bug 306
+// Code change! Bug 306 (fixed in Why 2.2)
 // Param n does not match man.
 // n == 0 ==> 0 not mentioned in man.
 

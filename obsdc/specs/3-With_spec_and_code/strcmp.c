@@ -41,7 +41,7 @@
 
 // Proven by Simplify.
 
-// Code change! Bug 306
+// Code change! Bug 306 (fixed in Why 2.2)
 
 /*
  * Compare strings.

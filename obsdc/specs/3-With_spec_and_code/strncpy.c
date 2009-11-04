@@ -43,17 +43,27 @@
  * Return dst.
  */
 
-// Z3, 1/64 not proven.
+// Proven by Simplify.
 
 //man: what happens if dst is shorter?
-// param n different in man
+// ? had to add < int_max for safety: overflow.
+//param n different in man
 
 /*@ requires valid_string(dst) && valid_string(src);
-    requires \valid_range(dst, 0, n);
-    assigns dst[0..n-1];
-    ensures \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
-    ensures strlen(src) < n ==> \forall integer i; strlen(src) <= i < n && dst[i] == '\0';
+    requires n < INT_MAX;
+    requires \valid_range(dst, 0, minimum(n, strlen(src)));
     ensures \result == dst;
+    behavior b1:
+		assumes n == 0 || strlen(src) == 0;
+		assigns \nothing;
+	behavior b2:
+		assumes n > 0 && strlen(src) > 0;
+		assigns dst[0..n];
+		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == src[i];
+	behavior b3:
+		assumes n > 0 && strlen(src) > 0 && strlen(src) <= n;
+		assigns dst[0..n];
+		ensures \forall integer i; strlen(src) <= i <= n && dst[i] == '\0';
  */
 char *
 strncpy(char *dst, const char *src, size_t n)

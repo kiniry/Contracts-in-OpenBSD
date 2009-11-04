@@ -40,6 +40,8 @@ __warn_references(strcpy,
     "warning: strcpy() is almost always misused, please use strlcpy()");
 #endif
 
+// Proven by Simplify
+
 // Params don't match man.
 
 /*@ requires \valid(to) && valid_string(from);

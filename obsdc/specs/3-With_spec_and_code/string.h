@@ -66,7 +66,22 @@ size_t strcspn(const char *s1, const char *s2);
   @ ensures \result == strlen(s) && \forall unsigned int k; 0 <= k < \result && s[k] != '\0';
   @*/
 size_t	 strlen(const char *s);
-char	*strncat(char *, const char *, size_t)
+/*@
+  requires valid_string(src) && valid_string(dst) && \valid_range(dst, 0, strlen(dst) + minimum(n, strlen(src)));
+  assigns dst;
+  ensures \result == dst;
+  behavior b1:
+	  assumes n == 0 || strlen(src) == 0;
+	  assigns \nothing;
+  behavior b2:
+      assumes n > 0 && strlen(src) > 0;
+	  ensures strlen(dst) == \old(strlen(dst)) + minimum(n, strlen(src));
+	  ensures \forall integer k; 0 <= k < \old(strlen(dst)) ==> dst[k] == \old(dst[k]);
+	  ensures \forall integer k; 0 <= k < minimum(n, strlen(src)) ==>
+			dst[k + \old(strlen(dst))] == src[k];
+	  ensures dst[strlen(dst)] == '\0';
+ */
+char	*strncat(char *dst, const char *src, size_t n)
 		__attribute__ ((__bounded__(__string__,1,3)));
 /*@  requires valid_string(s1);
   @  requires valid_string(s2);
@@ -77,7 +92,23 @@ char	*strncat(char *, const char *, size_t)
   @  ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
  */
 int	 strncmp(const char *s1, const char *s2, size_t n);
-char	*strncpy(char *, const char *, size_t)
+/*@ requires valid_string(dst) && valid_string(src);
+    requires n < INT_MAX;
+    requires \valid_range(dst, 0, minimum(n, strlen(src)));
+    ensures \result == dst;
+    behavior b1:
+		assumes n == 0 || strlen(src) == 0;
+		assigns \nothing;
+	behavior b2:
+		assumes n > 0 && strlen(src) > 0;
+		assigns dst[0..n];
+		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == src[i];
+	behavior b3:
+		assumes n > 0 && strlen(src) > 0 && strlen(src) <= n;
+		assigns dst[0..n];
+		ensures \forall integer i; strlen(src) <= i <= n && dst[i] == '\0';
+ */
+char	*strncpy(char *dst, const char *src, size_t n)
 		__attribute__ ((__bounded__(__string__,1,3)));
 /*@
   @ requires valid_string(s1);
@@ -99,7 +130,33 @@ char * strpbrk(const char *s1, const char *s2);
   @ ensures '\0' == c ==> \result == \null;
  */
 char	*strrchr(const char *s, int c);
-char	*strstr(const char *, const char *);
+/*@ predicate contains_string_at_i{L}(char *big, char *little, integer i) =
+  @   \forall integer k; 0 <= k && k < strlen(little) && (k + i) < strlen(big) && big[k + i] == little[k];
+  @*/
+
+/*@
+  @ requires valid_string(s) && valid_string(find);
+  @ assigns \nothing;
+  @ behavior b1:
+  @   assumes strlen(find) == 0;
+  @   ensures \result == s;
+  @ behavior b2:
+  @   assumes strlen(s) < strlen(find);
+  @   ensures \result == \null;
+  @ behavior b3:
+  @   assumes strlen(s) >= strlen(find);
+  @   assumes \exists integer i; 0 <= i <= (strlen(s) - strlen(find)) && contains_string_at_i(s, find, i) &&
+                 \forall integer j; 0 <= j < i ==> !contains_string_at_i(s, find, j);
+  @   ensures contains_string_at_i(\result, find, 0);
+  @ behavior b4:
+  @   assumes \forall integer i; 0 <= i < strlen(s) && s[i] != *find;
+  @   ensures \result == \null;
+  @ behavior b5:
+  @   assumes strlen(s) >= strlen(find) && strlen(find) > 0;
+  @   assumes \forall integer i; 0 <= i < strlen(s) && !contains_string_at_i(s, find, i);
+  @   ensures \result == \null;
+ */
+char	*strstr(const char *s, const char *find);
 
 
 #if __BSD_VISIBLE || __XPG_VISIBLE >= 420
