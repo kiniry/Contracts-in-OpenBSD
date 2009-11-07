@@ -22,7 +22,6 @@ typedef	__size_t	size_t;
 #endif
 
 __BEGIN_DECLS
-int	 memcmp(const void *, const void *, size_t);
 /*@ requires valid_string(s) && valid_string(append) && \valid_range(s, 0, strlen(s) + strlen(append));
     assigns s;
     ensures strlen(s) == \old(strlen(s) + strlen(append));
@@ -52,15 +51,6 @@ int	 strcmp(const char *s1, const char *s2);
     ensures \result == to;
  */
 char	*strcpy(char *to, const char *from);
-/*@
-  @ requires valid_string(s1) && valid_string(s2);
-  @ assigns \nothing;
-  @ ensures \exists integer i; 0 <= i < strlen(s1) &&
-  @         \forall integer j; 0 <= j < strlen(s2) &&
-  @          s2[j] != s1[i] ==> \result == i + 1;
- */
-size_t strcspn(const char *s1, const char *s2);
-
 /*@ requires valid_string(s);
   @ assigns \nothing;
   @ ensures \result == strlen(s) && \forall unsigned int k; 0 <= k < \result && s[k] != '\0';
@@ -111,17 +101,6 @@ int	 strncmp(const char *s1, const char *s2, size_t n);
 char	*strncpy(char *dst, const char *src, size_t n)
 		__attribute__ ((__bounded__(__string__,1,3)));
 /*@
-  @ requires valid_string(s1);
-  @ assigns \nothing;
-  @ ensures \exists integer i; 0 <= i < strlen(s2) &&
-  @         \exists integer j; 0 <= j < strlen(s1) &&
-  @          s2[i] == s1[j] ==> \result == s1+j;
-  @ ensures \forall integer i; 0 <= i < strlen(s2) &&
-  @         \forall integer j; 0 <= j < strlen(s1) &&
-  @          s2[i] != s1[j] ==> \result == \null;
- */
-char * strpbrk(const char *s1, const char *s2);
-/*@
   @ requires valid_string(s);
   @ assigns \nothing;
   @ ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c &&
@@ -158,17 +137,41 @@ char	*strrchr(const char *s, int c);
  */
 char	*strstr(const char *s, const char *find);
 
-
-#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
-int	 strcasecmp(const char *, const char *);
-int	 strncasecmp(const char *, const char *, size_t);
-char	*strdup(const char *);
-#endif
-
 #if __BSD_VISIBLE
-size_t	 strlcat(char *, const char *, size_t)
+/*@
+  requires valid_string(src) && valid_string(dst) && \valid_range(dst, 0, siz);
+  assigns dst;
+  behavior b1:
+	  assumes siz == 0;
+	  assigns \nothing;
+	  ensures \result == strlen(src);
+  behavior b2:
+      assumes siz > 0 && strlen(dst) < siz;
+	  ensures strlen(dst) == \old(strlen(dst)) + minimum(siz, strlen(src));
+	  ensures \forall integer k; 0 <= k < \old(strlen(dst)) ==> dst[k] == \old(dst[k]);
+	  ensures \forall integer k; 0 <= k < minimum(siz, strlen(src)) ==>
+			dst[k + \old(strlen(dst))] == src[k];
+	  ensures dst[strlen(dst)] == '\0';
+	  ensures \result == \old(strlen(dst)) + strlen(src);
+  behavior b3:
+      assumes siz > 0 && strlen(dst) >= siz;
+	  assigns \nothing;
+	  ensures \result == siz + strlen(src);
+ */
+size_t	 strlcat(char *dst, const char *src, size_t siz)
 		__attribute__ ((__bounded__(__string__,1,3)));
-size_t	 strlcpy(char *, const char *, size_t)
+/*@ requires \valid_range(dst, 0, siz) && valid_string(src);
+    ensures \result == strlen(src);
+    behavior b1:
+		assumes siz == 0;
+		assigns \nothing;
+	behavior b2:
+		assumes siz > 0;
+		assigns dst;
+		ensures \forall integer i; 0 <= i < minimum(siz, strlen(src)) ==> dst[i] == src[i];
+		ensures dst[minimum(siz, strlen(src))] == 0;
+ */
+size_t	 strlcpy(char *dst, const char *src, size_t siz)
 		__attribute__ ((__bounded__(__string__,1,3)));
 #endif
 __END_DECLS

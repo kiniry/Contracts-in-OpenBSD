@@ -165,9 +165,41 @@ char	*strdup(const char *s);
 #endif
 
 #if __BSD_VISIBLE
-size_t	 strlcat(char *, const char *, size_t)
+/*@
+  requires valid_string(src) && valid_string(dst) && \valid_range(dst, 0, size);
+  assigns dst;
+  behavior b1:
+	  assumes size == 0 || strlen(src) == 0;
+	  assigns \nothing;
+	  ensures \result == 0;
+  behavior b2:
+      assumes size > 0 && strlen(src) > 0 && strlen(dst) < size;
+	  ensures strlen(dst) == \old(strlen(dst)) + minimum(size, strlen(src));
+	  ensures \forall integer k; 0 <= k < \old(strlen(dst)) ==> dst[k] == \old(dst[k]);
+	  ensures \forall integer k; 0 <= k < minimum(size, strlen(src)) ==>
+			dst[k + \old(strlen(dst))] == src[k];
+	  ensures dst[strlen(dst)] == '\0';
+	  ensures \result == \old(strlen(dst)) + strlen(src);
+behavior b3:
+      assumes size > 0 && strlen(src) > 0 && strlen(dst) >= size;
+	  assigns \nothing;
+	  ensures \result == size + strlen(src);
+ */
+size_t	 strlcat(char *dst, const char *src, size_t size)
 		__attribute__ ((__bounded__(__string__,1,3)));
-size_t	 strlcpy(char *, const char *, size_t)
+/*@ requires \valid_range(dst, 0, size) && valid_string(src);
+    behavior b1:
+		assumes size == 0 || strlen(src) == 0;
+		assigns \nothing;
+		ensures \result == 0;
+	behavior b2:
+		assumes size > 0 && strlen(src) > 0;
+		assigns dst[0..size];
+		ensures \forall integer i; 0 <= i < minimum(size, strlen(src)) ==> dst[i] == src[i];
+		ensures dst[size] == 0;
+		ensures \result == strlen(src);
+ */
+size_t	 strlcpy(char *dst, const char *src, size_t size)
 		__attribute__ ((__bounded__(__string__,1,3)));
 #endif
 __END_DECLS
