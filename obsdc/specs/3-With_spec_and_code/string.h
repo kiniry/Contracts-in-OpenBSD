@@ -141,10 +141,10 @@ char	*strstr(const char *s, const char *find);
 /*@
   requires valid_string(src) && valid_string(dst) && \valid_range(dst, 0, siz);
   assigns dst;
+  ensures \result == strlen(src) + minimum(siz, strlen(\old(dst)));
   behavior b1:
 	  assumes siz == 0;
 	  assigns \nothing;
-	  ensures \result == strlen(src);
   behavior b2:
       assumes siz > 0 && strlen(dst) < siz;
 	  ensures strlen(dst) == \old(strlen(dst)) + minimum(siz, strlen(src));
@@ -152,11 +152,9 @@ char	*strstr(const char *s, const char *find);
 	  ensures \forall integer k; 0 <= k < minimum(siz, strlen(src)) ==>
 			dst[k + \old(strlen(dst))] == src[k];
 	  ensures dst[strlen(dst)] == '\0';
-	  ensures \result == \old(strlen(dst)) + strlen(src);
   behavior b3:
       assumes siz > 0 && strlen(dst) >= siz;
 	  assigns \nothing;
-	  ensures \result == siz + strlen(src);
  */
 size_t	 strlcat(char *dst, const char *src, size_t siz)
 		__attribute__ ((__bounded__(__string__,1,3)));
