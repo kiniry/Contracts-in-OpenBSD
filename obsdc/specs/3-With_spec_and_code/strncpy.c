@@ -49,7 +49,8 @@
 // ? had to add < int_max for safety: overflow.
 //param n different in man
 
-/*@ requires valid_string(dst) && valid_string(src);
+/*@ requires valid_string(dst);
+    requires valid_string(src);
     requires n < INT_MAX;
     requires \valid_range(dst, 0, minimum(n, strlen(src)));
     ensures \result == dst;
@@ -59,10 +60,11 @@
 	behavior b2:
 		assumes n > 0 && strlen(src) > 0;
 		assigns dst[0..n];
-		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == src[i];
+		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == \old(src[i]);
 	behavior b3:
 		assumes n > 0 && strlen(src) > 0 && strlen(src) <= n;
 		assigns dst[0..n];
+		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == \old(src[i]);
 		ensures \forall integer i; strlen(src) <= i <= n && dst[i] == '\0';
  */
 char *

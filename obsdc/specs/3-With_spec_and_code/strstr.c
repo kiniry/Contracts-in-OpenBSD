@@ -42,7 +42,8 @@
  */
 
 /*@
-  @ requires valid_string(s) && valid_string(find);
+  @ requires valid_string(s);
+  @ requires valid_string(find);
   @ assigns \nothing;
   @ behavior b1:
   @   assumes strlen(find) == 0;

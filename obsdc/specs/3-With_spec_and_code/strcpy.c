@@ -44,9 +44,10 @@ __warn_references(strcpy,
 
 // Params don't match man.
 
-/*@ requires \valid(to) && valid_string(from);
+/*@ requires \valid(to);
+    requires valid_string(from);
     assigns to;
-    ensures \forall integer i; 0 <= i <= strlen(from) && to[i] == from[i];
+    ensures \forall integer i; 0 <= i <= strlen(from) && to[i] == \old(from[i]);
     ensures \result == to;
  */
 char *

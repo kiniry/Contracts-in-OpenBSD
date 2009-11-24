@@ -28,7 +28,8 @@
  * will be copied.  Always NUL terminates (unless siz == 0).
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
-/*@ requires \valid_range(dst, 0, siz) && valid_string(src);
+/*@ requires \valid_range(dst, 0, siz);
+    requires valid_string(src);
     ensures \result == strlen(src);
     behavior b1:
 		assumes siz == 0;
@@ -36,7 +37,7 @@
 	behavior b2:
 		assumes siz > 0;
 		assigns dst;
-		ensures \forall integer i; 0 <= i < minimum(siz, strlen(src)) ==> dst[i] == src[i];
+		ensures \forall integer i; 0 <= i < minimum(siz, strlen(src)) ==> dst[i] == \old(src[i]);
 		ensures dst[minimum(siz, strlen(src))] == 0;
  */
 size_t

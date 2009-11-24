@@ -43,7 +43,10 @@
  * If retval >= siz, truncation occurred.
  */
 /*@
-  requires valid_string(src) && valid_string(dst) && \valid_range(dst, 0, siz);
+  requires valid_string(src);
+  requires valid_string(dst);
+  requires \valid_range(dst, 0, siz);
+  requires disjoint_strings(src, dst);
   assigns dst;
   ensures \result == strlen(src) + minimum(siz, strlen(\old(dst)));
   behavior b1:

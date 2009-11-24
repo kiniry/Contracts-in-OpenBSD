@@ -1,0 +1,11 @@
+
+e:\fr\obsdc\specs\3-With_spec_and_code>frama-c -jessie -jessie-no-regions -pp-annot -cpp-extra-args " -include e:/frama-c/share/frama-c/jessie/jessie_prolog.h" strlcat.c 
+[kernel] preprocessing with "gcc -C -E -I.  -include e:/frama-c/share/frama-c/jessie/jessie_prolog.h -dD strlcat.c"
+[jessie] Starting Jessie translation
+[jessie] Producing Jessie files in subdir strlcat.jessie
+[jessie] File strlcat.jessie/strlcat.jc written.
+[jessie] File strlcat.jessie/strlcat.cloc written.
+[jessie] Calling Jessie tool in subdir strlcat.jessie
+Generating Why function strlcat
+[jessie] Calling VCs generator.
+gwhy-bin [...] why/strlcat.why

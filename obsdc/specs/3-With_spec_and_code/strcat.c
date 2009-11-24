@@ -44,7 +44,10 @@ __warn_references(strcat,
 
 // man is confusing as it mixes N version.
 
-/*@ requires valid_string(s) && valid_string(append) && \valid_range(s, 0, strlen(s) + strlen(append));
+/*@ requires valid_string(s);
+    requires valid_string(append);
+    requires \valid_range(s, 0, strlen(s) + strlen(append));
+    requires disjoint_strings(s, append);
     assigns s;
     ensures strlen(s) == \old(strlen(s) + strlen(append));
     ensures \forall integer i; 0 <= i < \old(strlen(s)) ==> s[i] == \old(s[i]);

@@ -43,7 +43,10 @@
 // man params don't match.
 
 /*@
-  requires valid_string(src) && valid_string(dst) && \valid_range(dst, 0, strlen(dst) + minimum(n, strlen(src)));
+  requires valid_string(src);
+  requires valid_string(dst);
+  requires \valid_range(dst, 0, strlen(dst) + minimum(n, strlen(src)));
+  requires disjoint_strings(src, dst);
   assigns dst;
   ensures \result == dst;
   behavior b1:
