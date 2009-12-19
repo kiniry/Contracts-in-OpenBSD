@@ -35,26 +35,28 @@
 #include <lib/libkern/libkern.h>
 #endif
 
-// Proven by Simplify.
+// Proven by Z3.
 
 // param name mismatch with man.
 
 /*@ requires valid_string(str);
   @ assigns \nothing;
-  @ ensures str[\result] == '\0' && \forall integer k; 0 <= k < \result ==> str[k] != '\0';
+  @ ensures \result == strlen(str);
   @*/
 size_t
 strlen(const char *str)
 {
 	const char *s;
-	//@ ghost int len = strlen(str);
-	/*@ loop assigns s;
-	    loop invariant s >= str && 0 <= s-str <= len;
-	    loop invariant \forall integer k; 0 <= k < (s-str) ==> str[k] != '\0';
-	*/
+	/*@
+	  loop invariant valid_string(s);
+	  loop invariant \base_addr(s) == \base_addr(str);
+	  loop invariant \forall integer k; 0 <= k < (s-str) ==> str[k] != '\0';
+	  loop invariant 0 <= (s-str) <= strlen(str);
+	  */
 	for (s = str; *s; ++s)
 		;
 	//@ assert *s == '\0';
+	//@ assert str[s-str] == '\0';
 	return (s - str);
 }
 

@@ -58,12 +58,12 @@
 		assumes n == 0 || strlen(src) == 0;
 		assigns \nothing;
 	behavior b2:
-		assumes n > 0 && strlen(src) > 0;
-		assigns dst[0..n];
+		assumes n > 0 && strlen(src) > 0 && strlen(src) > n;
+		assigns dst[0..n-1];
 		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == \old(src[i]);
 	behavior b3:
 		assumes n > 0 && strlen(src) > 0 && strlen(src) <= n;
-		assigns dst[0..n];
+		assigns dst[0..n-1];
 		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == \old(src[i]);
 		ensures \forall integer i; strlen(src) <= i <= n && dst[i] == '\0';
  */
@@ -76,18 +76,18 @@ strncpy(char *dst, const char *src, size_t n)
 		//@ ghost int i = 0;
 		//@ ghost int origN = n;
 		//@ ghost int src_len = strlen(src);
-		//@ ghost int origND = n - 1;
-		/*@ loop assigns d, s, n, dst[0..origND];
+
+		/*@ loop assigns d, s, n, dst[0..origN-1];
 		    loop invariant n >=0;
 			loop invariant i <= origN && i <= src_len;
-			loop invariant valid_string(d) && valid_string(s);
+			loop invariant \valid(d) && valid_string(s);
 			loop invariant \forall integer k; 0 <= k < i ==> dst[k] == src[k];
 		*/
 		do {
 			if ((*d++ = *s++) == 0) { //@ ghost i++;
 				/* NUL pad the remaining n-1 bytes */
 				//@ ghost int j = i;
-				/*@ loop assigns d, n, dst[src_len..origND];
+				/*@ loop assigns d, n, dst[src_len..origN-1];
 					loop invariant n >= 0 && j <= origN;
 					loop invariant \forall integer k; src_len <= k < j ==> dst[k] == 0;
 				*/

@@ -26,23 +26,36 @@ typedef	__size_t	size_t;
         0 <= i < strlen(s1) && 0 <= j < strlen(s2) ==> s1 + i != s2 + j;
 */
 
+/*@ predicate disjoint_strings_len{L}(char *s1, char *s2, integer l) =
+     \forall integer i, j;
+        0 <= i <= (strlen(s1) + l) && 0 <= j <= strlen(s2) ==> s1 + i != s2 + j;
+*/
+
 __BEGIN_DECLS
 /*@ requires valid_string(s);
     requires valid_string(append);
+    requires disjoint_strings_len(s, append, strlen(append));
     requires \valid_range(s, 0, strlen(s) + strlen(append));
-    requires disjoint_strings(s, append);
-    assigns s;
-    ensures strlen(s) == \old(strlen(s) + strlen(append));
-    ensures \forall integer i; 0 <= i < \old(strlen(s)) ==> s[i] == \old(s[i]);
-    ensures \forall integer j; \old(strlen(s)) <= j <= strlen(s) ==> s[j] == append[j];
+	assigns s[..];
+    ensures strlen(s) == strlen{Old}(s) + strlen(append);
+    ensures \forall integer i; 0 <= i < strlen{Old}(s) ==> s[i] == \old(s[i]);
+    ensures \forall integer j; strlen{Old}(s) <= j < strlen(s) ==> s[j] == append[j - strlen{Old}(s)];
     ensures  \result == s;
  */
 char	*strcat(char *s, const char *append);
 /*@ requires valid_string(s);
     assigns \nothing;
-    ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c ==>
-       \forall integer j; 0 <= j < i && s[j] != c ==> \result == s+i;
-    ensures \forall integer i; 0 <= i < strlen(s) && s[i] != c ==> \result == \null;
+    behavior b1:
+       assumes c == '\0';
+       ensures \result == \null;
+    behavior b1:
+       assumes strlen(s) == 0;
+       ensures \result == \null;
+    behavior b1:
+		assumes c == '\0' && strlen(s) > 0;
+        ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c ==>
+		   \forall integer j; 0 <= j < i && s[j] != c ==> \result == s+i;
+	    ensures \forall integer i; 0 <= i < strlen(s) && s[i] != c ==> \result == \null;
  */
 char	*strchr(const char *s, int c);
 /*@  requires valid_string(s1);
@@ -62,13 +75,13 @@ int	 strcmp(const char *s1, const char *s2);
 char	*strcpy(char *to, const char *from);
 /*@ requires valid_string(s);
   @ assigns \nothing;
-  @ ensures \result == strlen(s) && \forall unsigned int k; 0 <= k < \result && s[k] != '\0';
+  @ ensures \result == strlen(s);
   @*/
 size_t	 strlen(const char *s);
 /*@
   requires valid_string(src);
   requires valid_string(dst);
-  requires \valid_range(dst, 0, strlen(dst) + minimum(n, strlen(src)));
+  requires \valid_range(dst, 0, strlen(dst) + minimum(n, strlen(src)) + 1);
   requires disjoint_strings(src, dst);
   assigns dst;
   ensures \result == dst;
@@ -103,12 +116,12 @@ int	 strncmp(const char *s1, const char *s2, size_t n);
 		assumes n == 0 || strlen(src) == 0;
 		assigns \nothing;
 	behavior b2:
-		assumes n > 0 && strlen(src) > 0;
-		assigns dst[0..n];
+		assumes n > 0 && strlen(src) > 0 && strlen(src) > n;
+		assigns dst[0..n-1];
 		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == \old(src[i]);
 	behavior b3:
 		assumes n > 0 && strlen(src) > 0 && strlen(src) <= n;
-		assigns dst[0..n];
+		assigns dst[0..n-1];
 		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == \old(src[i]);
 		ensures \forall integer i; strlen(src) <= i <= n && dst[i] == '\0';
  */
@@ -165,15 +178,16 @@ char	*strstr(const char *s, const char *find);
 	  assigns \nothing;
   behavior b2:
       assumes siz > 0 && strlen(dst) < siz;
-	  ensures strlen(dst) == \old(strlen(dst)) + minimum(siz, strlen(src));
+	  ensures strlen(dst) == \old(strlen(dst)) + minimum(siz - \old(strlen(dst)), strlen(src));
 	  ensures \forall integer k; 0 <= k < \old(strlen(dst)) ==> dst[k] == \old(dst[k]);
-	  ensures \forall integer k; 0 <= k < minimum(siz, strlen(src)) ==>
+	  ensures \forall integer k; 0 <= k < minimum(siz - \old(strlen(dst)) - 1, strlen(src)) ==>
 			dst[k + \old(strlen(dst))] == src[k];
 	  ensures dst[strlen(dst)] == '\0';
   behavior b3:
       assumes siz > 0 && strlen(dst) >= siz;
 	  assigns \nothing;
  */
+
 size_t	 strlcat(char *dst, const char *src, size_t siz)
 		__attribute__ ((__bounded__(__string__,1,3)));
 /*@ requires \valid_range(dst, 0, siz);

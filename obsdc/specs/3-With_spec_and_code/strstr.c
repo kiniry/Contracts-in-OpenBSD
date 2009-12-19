@@ -84,11 +84,8 @@ strstr(const char *s, const char *find)
 		do {
 			//@ ghost char *p = s;
 			/*@ loop assigns s;
-			  @ loop invariant sc != c && *s != '\0';
 			  @ loop invariant 0 <= ind <= lenS;
 			  @ loop invariant \forall integer j; 0 <= j < (s-p) ==> p[j] != *origFind;
-			  @ loop invariant \forall integer j; 0 <= j < (s-p) ==> p[j] != 0;
-			  @ loop invariant \forall integer k; 0 <= k < ind ==> !contains_string_at_i(orig, origFind, k);
 			*/
 			do {
 				if ((sc = *s++) == 0) //ghost ind++;

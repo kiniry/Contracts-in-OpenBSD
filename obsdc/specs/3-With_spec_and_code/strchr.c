@@ -44,26 +44,36 @@
 
 /*@ requires valid_string(s);
     assigns \nothing;
-    ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c ==>
-       \forall integer j; 0 <= j < i && s[j] != c ==> \result == s+i;
-    ensures \forall integer i; 0 <= i < strlen(s) && s[i] != c ==> \result == \null;
+    behavior b1:
+       assumes c == '\0';
+       ensures \result == \null;
+    behavior b1:
+       assumes strlen(s) == 0;
+       ensures \result == \null;
+    behavior b1:
+		assumes c == '\0' && strlen(s) > 0;
+        ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c ==>
+		   \forall integer j; 0 <= j < i && s[j] != c ==> \result == s+i;
+	    ensures \forall integer i; 0 <= i < strlen(s) && s[i] != c ==> \result == \null;
  */
 char *
 strchr(const char *s, int c)
 {
 	//@ ghost char *orig = s;
-	//@ ghost int i = 0;
-	//@ ghost int len = strlen(s);
 	/*@ loop assigns s;
-		loop invariant valid_string(s);
-		loop invariant 0 <= i < len;
-		loop invariant \forall integer k; 0 <= k < i ==> orig[k] != c;
+		loop invariant \valid(s);
+		loop invariant \base_addr(s) == \base_addr(orig);
+		loop invariant 0 <= (s-orig) <= strlen(orig);
+		loop invariant \forall integer k; 0 <= k < (s-orig) ==> orig[k] != 0;
+		loop invariant \forall integer k; 0 <= k < (s-orig) ==> orig[k] != c;
+		loop invariant orig[(s-orig)] == c ==> \forall integer k; 0 <= k < (s-orig) ==> orig[k] != c;
 	 */
 	while (*s) {
 		if (*s == c)
 			return ((char *)s);
-		s++; //@ghost i++;
+		s++;
 	}
+	//@ assert \forall integer k; 0 <= k < strlen(orig) ==> orig[k] != c;
 	return (NULL);
 }
 

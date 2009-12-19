@@ -58,8 +58,7 @@ strrchr(const char *s, int c)
 	//@ ghost int len = strlen(s);
 	/*@ loop assigns s;
 		loop invariant valid_string(s);
-		loop invariant 0 <= i < len;
-		loop invariant *s != '\0';
+		loop invariant 0 <= i <= len;
 		loop invariant (t == \null) || (\valid(t) && *t == c);
 	 */
 	while (*s) {

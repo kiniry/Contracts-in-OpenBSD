@@ -45,7 +45,7 @@
 /*@
   requires valid_string(src);
   requires valid_string(dst);
-  requires \valid_range(dst, 0, strlen(dst) + minimum(n, strlen(src)));
+  requires \valid_range(dst, 0, strlen(dst) + minimum(n, strlen(src)) + 1);
   requires disjoint_strings(src, dst);
   assigns dst;
   ensures \result == dst;

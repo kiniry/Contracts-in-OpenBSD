@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include <string.h>
 
-// Proven by Simplify.
+// Proven by Simplify and Z3.
 // Param siz diff.
 
 // ??? not if siz == 0;
@@ -54,9 +54,9 @@
 	  assigns \nothing;
   behavior b2:
       assumes siz > 0 && strlen(dst) < siz;
-	  ensures strlen(dst) == \old(strlen(dst)) + minimum(siz, strlen(src));
+	  ensures strlen(dst) == \old(strlen(dst)) + minimum(siz - \old(strlen(dst)), strlen(src));
 	  ensures \forall integer k; 0 <= k < \old(strlen(dst)) ==> dst[k] == \old(dst[k]);
-	  ensures \forall integer k; 0 <= k < minimum(siz, strlen(src)) ==>
+	  ensures \forall integer k; 0 <= k < minimum(siz - \old(strlen(dst)) - 1, strlen(src)) ==>
 			dst[k + \old(strlen(dst))] == src[k];
 	  ensures dst[strlen(dst)] == '\0';
   behavior b3:
@@ -74,25 +74,30 @@ strlcat(char *dst, const char *src, size_t siz)
 	//@ ghost int lenDst = strlen(dst);
 
 	/* Find the end of dst and adjust bytes left but don't go past end */
+	//@ ghost int cnt = 0;
 	/*@
-	  loop assigns n, d;
-	  loop invariant 0 <= n <= siz;
-	  loop invariant *d != '\0';
-	  loop invariant d - dst <= lenDst;
+	  @ loop assigns n, d;
+	  @ loop invariant 0 <= n;
+	  @ loop invariant (d - dst) < lenDst;
+	  @ loop invariant cnt < minimum(siz, lenDst);
+	  @ loop invariant \forall integer k; 0 <= k < cnt ==> dst[k] != '\0';
 	 */
 	while (n-- != 0 && *d != '\0')
-		d++;
+		 d++; //@ ghost cnt++;
 	dlen = d - dst;
 	n = siz - dlen;
-
+    //@ assert (d-dst) == minimum(lenDst, siz);
 	if (n == 0)
 		return(dlen + strlen(s));
-	//@ ghost int i = dlen;
+	//@ assert siz > lenDst;
+
+	//@ ghost int i = 0;
+	//@ ghost int orig_n = n;
 	/*@
-	  loop assigns n;
-	  loop invariant *s != '\0';
-	  loop invariant dlen <= i <= lenSrc;
-	  loop invariant \forall integer k; 0 <= k < i ==> dst[k] == s[k - dlen];
+	  @ loop assigns n, s;
+	  @ loop invariant 0 <= i < lenSrc;
+	  @ loop invariant \forall integer k; 0 <= k < i ==> src[k] != 0;
+	  @ loop invariant \forall integer k; 0 <= k < i && n> 0   ==> dst[k + lenDst] == src[k];
 	 */
 	while (*s != '\0') {
 		if (n != 1) {
