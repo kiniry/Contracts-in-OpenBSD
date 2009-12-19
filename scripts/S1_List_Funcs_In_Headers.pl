@@ -50,7 +50,7 @@
         my @funcs;
 		foreach $line (@lines)
 		{
-  	  		if ($line =~ /^\s*\w+\*?\s+\*?\*?(\w+)\s*\((.*)\);/)
+  	  		if ($line =~ /^\s*\w+\*?\s+\*?\*?(\w+)\s*\((.*)\)/)
           	{
             	push @funcs, $1  unless ($line =~ /\)\(/) || ($2 =~ /\"/) || ($2 =~ /\(/) || ($line =~ /\(\*/); 
           	}

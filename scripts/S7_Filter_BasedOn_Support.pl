@@ -70,6 +70,7 @@
 			$ret = 2 if (($line =~ /goto\s+\w+;/)  
 			    || ($line =~ /\(\*\w+\)\(.*\)/)
 			 	|| ($line =~ /\(\w+\s*\*\)\w+/)
+			 	|| ($line =~ /void\s*\*/)
 			   );
 			 
 			$ret = 0 if (($line =~ /union/) || ($line =~ /\(.*,\s*\.\.\.\)/));
