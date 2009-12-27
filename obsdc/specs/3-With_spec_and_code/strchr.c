@@ -38,7 +38,7 @@
 #define NULL	((char *)0)
 #endif
 
-// Proven by Simplify
+// Proven by alt-ergo
 // Doc Bug ? : The terminating NUL character is considered part of the
 //     string.  If c is `\0', strchr() locates the terminating `\0'.
 
@@ -47,14 +47,17 @@
     behavior b1:
        assumes c == '\0';
        ensures \result == \null;
-    behavior b1:
+    behavior b2:
        assumes strlen(s) == 0;
        ensures \result == \null;
-    behavior b1:
-		assumes c == '\0' && strlen(s) > 0;
+    behavior b3:
+		assumes c != '\0' && strlen(s) > 0;
         ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c ==>
 		   \forall integer j; 0 <= j < i && s[j] != c ==> \result == s+i;
-	    ensures \forall integer i; 0 <= i < strlen(s) && s[i] != c ==> \result == \null;
+	behavior b4:
+		assumes c != '\0' && strlen(s) > 0;
+		assumes \forall integer i; 0 <= i <= strlen(s) && s[i] != c;
+	    ensures \result == \null;
  */
 char *
 strchr(const char *s, int c)
@@ -66,7 +69,7 @@ strchr(const char *s, int c)
 		loop invariant 0 <= (s-orig) <= strlen(orig);
 		loop invariant \forall integer k; 0 <= k < (s-orig) ==> orig[k] != 0;
 		loop invariant \forall integer k; 0 <= k < (s-orig) ==> orig[k] != c;
-		loop invariant orig[(s-orig)] == c ==> \forall integer k; 0 <= k < (s-orig) ==> orig[k] != c;
+		loop invariant orig[(s-orig)] == c ==> (\forall integer k; 0 <= k < (s-orig) ==> orig[k] != c);
 	 */
 	while (*s) {
 		if (*s == c)

@@ -48,14 +48,17 @@ char	*strcat(char *s, const char *append);
     behavior b1:
        assumes c == '\0';
        ensures \result == \null;
-    behavior b1:
+    behavior b2:
        assumes strlen(s) == 0;
        ensures \result == \null;
-    behavior b1:
-		assumes c == '\0' && strlen(s) > 0;
+    behavior b3:
+		assumes c != '\0' && strlen(s) > 0;
         ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c ==>
 		   \forall integer j; 0 <= j < i && s[j] != c ==> \result == s+i;
-	    ensures \forall integer i; 0 <= i < strlen(s) && s[i] != c ==> \result == \null;
+	behavior b4:
+		assumes c != '\0' && strlen(s) > 0;
+		assumes \forall integer i; 0 <= i <= strlen(s) && s[i] != c;
+	    ensures \result == \null;
  */
 char	*strchr(const char *s, int c);
 /*@  requires valid_string(s1);
@@ -127,13 +130,22 @@ int	 strncmp(const char *s1, const char *s2, size_t n);
  */
 char	*strncpy(char *dst, const char *src, size_t n)
 		__attribute__ ((__bounded__(__string__,1,3)));
-/*@
-  @ requires valid_string(s);
-  @ assigns \nothing;
-  @ ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c &&
-  @    (\forall integer j; i < j < strlen(s) ==> s[j] != c) ==> \result == s+i;
-  @ ensures (\forall integer i; 0 <= i < strlen(s) ==> s[i] != c) ==> \result == \null;
-  @ ensures '\0' == c ==> \result == \null;
+/*@ requires valid_string(s);
+    assigns \nothing;
+    behavior b1:
+       assumes c == '\0';
+       ensures \result == \null;
+    behavior b2:
+       assumes strlen(s) == 0;
+       ensures \result == \null;
+    behavior b3:
+		assumes c != '\0' && strlen(s) > 0;
+        ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c &&
+         (\forall integer j; i < j < strlen(s) ==> s[j] != c) ==> \result == s+i;
+    behavior b4:
+		assumes c != '\0' && strlen(s) > 0;
+		assumes \forall integer i; 0 <= i < strlen(s) && s[i] != c;
+		ensures \result == \null;
  */
 char	*strrchr(const char *s, int c);
 /*@ predicate contains_string_at_i{L}(char *big, char *little, integer i) =

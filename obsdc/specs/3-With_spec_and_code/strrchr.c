@@ -38,33 +38,45 @@
 #define NULL	((char *)0)
 #endif
 
-// Proven by Simplify.
+// Proven by alt-ergo and z3.
 
 // (doc?) bug: '\0' ==> null.
-/*@
-  @ requires valid_string(s);
-  @ assigns \nothing;
-  @ ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c &&
-  @    (\forall integer j; i < j < strlen(s) ==> s[j] != c) ==> \result == s+i;
-  @ ensures (\forall integer i; 0 <= i < strlen(s) ==> s[i] != c) ==> \result == \null;
-  @ ensures '\0' == c ==> \result == \null;
+/*@ requires valid_string(s);
+    assigns \nothing;
+    behavior b1:
+       assumes c == '\0';
+       ensures \result == \null;
+    behavior b2:
+       assumes strlen(s) == 0;
+       ensures \result == \null;
+    behavior b3:
+		assumes c != '\0' && strlen(s) > 0;
+        ensures \exists integer i; 0 <= i < strlen(s) && s[i] == c &&
+         (\forall integer j; i < j < strlen(s) ==> s[j] != c) ==> \result == s+i;
+    behavior b4:
+		assumes c != '\0' && strlen(s) > 0;
+		assumes \forall integer i; 0 <= i < strlen(s) && s[i] != c;
+		ensures \result == \null;
  */
 char *
 strrchr(const char *s, int c)
 {
 	char *t = NULL;
-
-	//@ ghost int i = 0;
-	//@ ghost int len = strlen(s);
+	//@ ghost char *orig = s;
 	/*@ loop assigns s;
-		loop invariant valid_string(s);
-		loop invariant 0 <= i <= len;
-		loop invariant (t == \null) || (\valid(t) && *t == c);
+		loop invariant \valid(s);
+		loop invariant \base_addr(s) == \base_addr(orig);
+		loop invariant 0 <= (s-orig) <= strlen(orig);
+		loop invariant \forall integer k; 0 <= k < (s-orig) ==> orig[k] != 0;
+		loop invariant \exists integer k; 0 <= k < (s-orig) && orig[k] == c ==> t != \null;
+		loop invariant strlen(orig) == 0 ==> t == \null;
+		loop invariant c == 0 ==> t == \null;
+		loop invariant t == \null || *t == c;
 	 */
 	while (*s) {
 		if (*s == c)
 			t = (char *)s;
-		s++; //@ ghost i++;
+		s++;
 	}
 	return (t);
 }

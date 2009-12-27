@@ -35,7 +35,7 @@
 #include <lib/libkern/libkern.h>
 #endif
 
-// Proven by Z3.
+// Proven by alt-ergo.
 
 // param name mismatch with man.
 
