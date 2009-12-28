@@ -35,19 +35,35 @@
 #include <lib/libkern/libkern.h>
 #endif
 
-// Proven by Simplify
+// Proven by z3
 
 // Code change! Bug 306 (fixed in Why 2.2)
+// consequently had to take unsigned casts out.
+
 // Param n does not match man.
 // n == 0 ==> 0 not mentioned in man.
 
+// had to add n < INT_MAX
+
 /*@  requires valid_string(s1);
-  @  requires valid_string(s2);
-  @  assigns \nothing;
-  @  ensures (n == 0) ==> \result == 0;
-  @  ensures \forall integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i] ==> \result == 0;
-  @  ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
-  @  ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
+     requires valid_string(s2);
+     requires n < INT_MAX;
+     assigns \nothing;
+     behavior b1:
+		assumes n == 0;
+		ensures \result == 0;
+	 behavior b2:
+		assumes n > 0;
+        assumes \forall integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i];
+        ensures \result == 0;
+     behavior b3:
+	 	assumes n > 0;
+	 	assumes \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] != s2[i];
+        ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] < s2[i] ==> \result < 0 ;
+     behavior b4:
+	 	assumes n > 0;
+	 	assumes \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] != s2[i];
+        ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] > s2[i] ==> \result > 0;
  */
 int
 strncmp(const char *s1, const char *s2, size_t n)
@@ -56,20 +72,27 @@ strncmp(const char *s1, const char *s2, size_t n)
 		return (0);
 	//@ ghost char *orig1 = s1;
 	//@ ghost char *orig2 = s2;
-	//@ ghost int len1 = strlen(s1);
-	//@ ghost int len2 = strlen(s2);
-	//@ ghost int len = n - 1;
-	//@ ghost int i = 0;
+	//@ ghost int origN = n;
 	/*@ loop assigns s1, s2, n;
-		loop invariant n >= 0 && 0 <= i <= minimum(len, minimum(len1, len2));
-		loop invariant valid_string(s1) && valid_string(s2);
-		loop invariant \forall integer k; 0 <= k < i ==> orig1[k] == orig2[k];
+	    loop variant n;
+		loop invariant valid_string(orig1);
+		loop invariant valid_string(orig2);
+		loop invariant \valid(s1) && \valid(s2);
+		loop invariant \base_addr(s1) == \base_addr(orig1);
+		loop invariant \base_addr(s2) == \base_addr(orig2);
+		loop invariant s1-orig1 == s2 - orig2;
+		loop invariant 0 <= (s2-orig2) <= strlen(orig2);
+		loop invariant 0 <= (s1-orig1) <= strlen(orig1);
+		loop invariant \forall integer k; 0 <= k < (s1-orig1) ==> orig1[k] != 0;
+		loop invariant \forall integer k; 0 <= k < (s1-orig1)==> orig1[k] == orig2[k];
+		loop invariant 0 < n <=  origN;
+		loop invariant 0 <= origN - n  <= origN;
 	*/
 	do {
 		if (*s1 != *s2++)
-			return ((unsigned char)*s1 - (unsigned char)*(--s2)); //entered bug 306 : return (*(unsigned char *)s1 - *(unsigned char *)--s2);
+			return (*s1 - *(--s2)); //entered bug 306 : return (*(unsigned char *)s1 - *(unsigned char *)--s2);
 		if (*s1++ == 0)
-			break;
-	} while (--n != 0); //@ ghost i++;
+			break; //@assert *(s1-1) == *(s2-1);
+	} while (--n != 0);
 	return (0);
 }

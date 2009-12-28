@@ -65,8 +65,8 @@ char	*strchr(const char *s, int c);
   @  requires valid_string(s2);
   @  assigns \nothing;
   @  ensures (strlen(s1) == strlen(s2) && \forall integer i; 0 <= i <= strlen(s1) && s1[i] == s2[i]) ==> \result == 0;
-  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
-  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
+  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s1[i] <  s2[i] ==> \result < 0;
+  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s2[i] >  s1[i] ==> \result > 0;
  */
 int	 strcmp(const char *s1, const char *s2);
 /*@ requires \valid(to);
@@ -102,12 +102,24 @@ size_t	 strlen(const char *s);
 char	*strncat(char *dst, const char *src, size_t n)
 		__attribute__ ((__bounded__(__string__,1,3)));
 /*@  requires valid_string(s1);
-  @  requires valid_string(s2);
-  @  assigns \nothing;
-  @  ensures (n == 0) ==> \result == 0;
-  @  ensures \forall integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i] ==> \result == 0;
-  @  ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
-  @  ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
+     requires valid_string(s2);
+     requires n < INT_MAX;
+     assigns \nothing;
+     behavior b1:
+		assumes n == 0;
+		ensures \result == 0;
+	 behavior b2:
+		assumes n > 0;
+        assumes \forall integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i];
+        ensures \result == 0;
+     behavior b3:
+	 	assumes n > 0;
+	 	assumes \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] != s2[i];
+        ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] < s2[i] ==> \result < 0 ;
+     behavior b4:
+	 	assumes n > 0;
+	 	assumes \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] != s2[i];
+        ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] > s2[i] ==> \result > 0;
  */
 int	 strncmp(const char *s1, const char *s2, size_t n);
 /*@ requires valid_string(dst);

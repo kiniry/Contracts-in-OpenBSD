@@ -38,10 +38,10 @@
 #include <lib/libkern/libkern.h>
 #endif
 
-
-// Proven by Simplify.
+// Proven by alt-ergo fully and also by Z3 except one preservation of loop inv.
 
 // Code change! Bug 306 (fixed in Why 2.2)
+// consequently had to take unsigned casts out.
 
 /*
  * Compare strings.
@@ -50,25 +50,29 @@
   @  requires valid_string(s2);
   @  assigns \nothing;
   @  ensures (strlen(s1) == strlen(s2) && \forall integer i; 0 <= i <= strlen(s1) && s1[i] == s2[i]) ==> \result == 0;
-  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && (unsigned char)s1[i] < (unsigned char) s2[i] ==> \result < 0;
-  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && (unsigned char) s2[i] > (unsigned char)s1[i] ==> \result > 0;
+  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s1[i] <  s2[i] ==> \result < 0;
+  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s2[i] >  s1[i] ==> \result > 0;
  */
 int
 strcmp(const char *s1, const char *s2)
 {
 	//@ ghost char *orig1 = s1;
 	//@ ghost char *orig2 = s2;
-	//@ ghost int i = 0;
-	//@ ghost int len1 = strlen(s1);
-    //@ ghost int len2 = strlen(s2);
 	/*@ loop assigns s1, s2;
-	    loop invariant valid_string(s1) && valid_string(s2);
-	    loop invariant 0 <= i && i <= len1 && i <= len2;
-	    loop invariant \forall integer k; 0 <= k < i ==> orig1[k] == orig2[k];
+	    loop invariant valid_string(orig1);
+	    loop invariant valid_string(orig2);
+	    loop invariant \valid(s1) && \valid(s2);
+	    loop invariant \base_addr(s1) == \base_addr(orig1);
+	    loop invariant \base_addr(s2) == \base_addr(orig2);
+	    loop invariant s1-orig1 == s2 - orig2;
+	    loop invariant 0 <= (s2-orig2) <= strlen(orig2);
+	    loop invariant 0 <= (s1-orig1) <= strlen(orig1);
+	    loop invariant \forall integer k; 0 <= k < (s2-orig2) ==> orig1[k] != 0;
+	    loop invariant \forall integer k; 0 <= k < (s2-orig2) ==> orig1[k] == orig2[k];
 	*/
 	while (*s1 == *s2++)
-		if (*s1++ == 0)//@ghost i++;
+		if (*s1++ == 0)
 			return (0);
 	//!!!! return (*(unsigned char *)s1 - *(unsigned char *)--s2);
-	return ((unsigned char)*s1 - (unsigned char)*(--s2)); //entered bug 306
+	return (*s1 - *(--s2)); //entered bug 306
 }
