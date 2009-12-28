@@ -35,7 +35,7 @@
 #include <lib/libkern/libkern.h>
 #endif
 
-// Proven by z3
+// Proven by z3 + for 1 p-l-i alt-ergo.
 
 // Code change! Bug 306 (fixed in Why 2.2)
 // consequently had to take unsigned casts out.
@@ -59,11 +59,10 @@
      behavior b3:
 	 	assumes n > 0;
 	 	assumes \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] != s2[i];
-        ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] < s2[i] ==> \result < 0 ;
-     behavior b4:
-	 	assumes n > 0;
-	 	assumes \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] != s2[i];
-        ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] > s2[i] ==> \result > 0;
+        ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] < s2[i] &&
+			(\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result < 0 ;
+        ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] > s2[i] &&
+			(\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result > 0;
  */
 int
 strncmp(const char *s1, const char *s2, size_t n)
@@ -86,7 +85,6 @@ strncmp(const char *s1, const char *s2, size_t n)
 		loop invariant \forall integer k; 0 <= k < (s1-orig1) ==> orig1[k] != 0;
 		loop invariant \forall integer k; 0 <= k < (s1-orig1)==> orig1[k] == orig2[k];
 		loop invariant 0 < n <=  origN;
-		loop invariant 0 <= origN - n  <= origN;
 	*/
 	do {
 		if (*s1 != *s2++)

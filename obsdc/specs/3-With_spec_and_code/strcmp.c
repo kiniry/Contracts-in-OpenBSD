@@ -38,7 +38,7 @@
 #include <lib/libkern/libkern.h>
 #endif
 
-// Proven by alt-ergo fully and also by Z3 except one preservation of loop inv.
+// Proven by alt-ergo
 
 // Code change! Bug 306 (fixed in Why 2.2)
 // consequently had to take unsigned casts out.
@@ -50,8 +50,10 @@
   @  requires valid_string(s2);
   @  assigns \nothing;
   @  ensures (strlen(s1) == strlen(s2) && \forall integer i; 0 <= i <= strlen(s1) && s1[i] == s2[i]) ==> \result == 0;
-  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s1[i] <  s2[i] ==> \result < 0;
-  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s2[i] >  s1[i] ==> \result > 0;
+  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s1[i] <  s2[i]  &&
+		  (\forall integer k; 0 <= k < i ==> s1[k] == s2[k])  ==> \result < 0;
+  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s2[i] >  s1[i] &&
+		  (\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result > 0;
  */
 int
 strcmp(const char *s1, const char *s2)
