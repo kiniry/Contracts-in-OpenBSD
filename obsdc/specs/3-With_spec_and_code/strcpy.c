@@ -40,14 +40,15 @@ __warn_references(strcpy,
     "warning: strcpy() is almost always misused, please use strlcpy()");
 #endif
 
-// Proven by Simplify
+// Proven by Z3 + for 1 p-l-i by Simplify
 
 // Params don't match man.
 
-/*@ requires \valid(to);
-    requires valid_string(from);
-    assigns to;
-    ensures \forall integer i; 0 <= i <= strlen(from) && to[i] == \old(from[i]);
+/*@ requires valid_string(from);
+    requires disjoint_strings_len2(to, from, strlen(from));
+    requires \valid_range(to, 0, strlen(from));
+    assigns to[0..];
+    ensures \forall integer i; 0 <= i < strlen(from) ==> to[i] == from[i];
     ensures \result == to;
  */
 char *
@@ -56,12 +57,16 @@ strcpy(char *to, const char *from)
 	char *save = to;
 
 	//@ ghost char *origFrom = from;
-	//@ ghost int lenFrom = strlen(from);
-	/*@ loop assigns to, from;
-	    loop invariant from >= origFrom && ((from-origFrom) <= lenFrom);
+	/*@ loop assigns save[0..], to, from;
+	    loop variant strlen(from);
+	    loop invariant \base_addr(to) == \base_addr(save);
+	    loop invariant \base_addr(from) == \base_addr(origFrom);
+	    loop invariant 0 <= (from-origFrom) <= strlen(origFrom);
 	    loop invariant (to-save) == (from - origFrom);
-		loop invariant \valid(to) && valid_string(from);
-		loop invariant \forall integer k; 0 <= k < (to-save) ==> save[k] == origFrom[k];
+		loop invariant \valid(to) && \valid(from);
+		loop invariant \forall integer k; 0 <= k < (from-origFrom) ==> origFrom[k] != 0;
+		loop invariant \forall integer k; 0 <= k < (from-origFrom) ==> save[k] == origFrom[k];
+		loop invariant \forall integer k; (from-origFrom) <= k < strlen(origFrom) ==> origFrom[k] == \at(from[k], Pre);
 	*/
 	for (; (*to = *from) != '\0'; ++from, ++to);
 	return(save);

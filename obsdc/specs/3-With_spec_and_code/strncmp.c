@@ -52,10 +52,12 @@
      behavior b1:
 		assumes n == 0;
 		ensures \result == 0;
+		assigns \nothing;
 	 behavior b2:
 		assumes n > 0;
         assumes \forall integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i];
         ensures \result == 0;
+        assigns \nothing;
      behavior b3:
 	 	assumes n > 0;
 	 	assumes \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] != s2[i];
@@ -63,6 +65,7 @@
 			(\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result < 0 ;
         ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] > s2[i] &&
 			(\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result > 0;
+		assigns \nothing;
  */
 int
 strncmp(const char *s1, const char *s2, size_t n)

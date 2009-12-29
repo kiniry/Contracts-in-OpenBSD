@@ -31,6 +31,11 @@ typedef	__size_t	size_t;
         0 <= i <= (strlen(s1) + l) && 0 <= j <= strlen(s2) ==> s1 + i != s2 + j;
 */
 
+/*@ predicate disjoint_strings_len2{L}(char *s1, char *s2, integer l) =
+     \forall integer i, j;
+        0 <= i <= l && 0 <= j <= l ==> s1 + i != s2 + j;
+*/
+
 __BEGIN_DECLS
 /*@ requires valid_string(s);
     requires valid_string(append);
@@ -71,10 +76,11 @@ char	*strchr(const char *s, int c);
 		  (\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result > 0;
  */
 int	 strcmp(const char *s1, const char *s2);
-/*@ requires \valid(to);
-    requires valid_string(from);
-    assigns to;
-    ensures \forall integer i; 0 <= i <= strlen(from) && to[i] == \old(from[i]);
+/*@ requires valid_string(from);
+    requires disjoint_strings_len2(to, from, strlen(from));
+    requires \valid_range(to, 0, strlen(from));
+    assigns to[0..];
+    ensures \forall integer i; 0 <= i < strlen(from) ==> to[i] == from[i];
     ensures \result == to;
  */
 char	*strcpy(char *to, const char *from);
@@ -110,10 +116,12 @@ char	*strncat(char *dst, const char *src, size_t n)
      behavior b1:
 		assumes n == 0;
 		ensures \result == 0;
+		assigns \nothing;
 	 behavior b2:
 		assumes n > 0;
         assumes \forall integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i];
         ensures \result == 0;
+        assigns \nothing;
      behavior b3:
 	 	assumes n > 0;
 	 	assumes \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] != s2[i];
@@ -121,6 +129,7 @@ char	*strncat(char *dst, const char *src, size_t n)
 			(\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result < 0 ;
         ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] > s2[i] &&
 			(\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result > 0;
+		assigns \nothing;
  */
 int	 strncmp(const char *s1, const char *s2, size_t n);
 /*@ requires valid_string(dst);
@@ -173,20 +182,20 @@ char	*strrchr(const char *s, int c);
   @   assumes strlen(find) == 0;
   @   ensures \result == s;
   @ behavior b2:
-  @   assumes strlen(s) < strlen(find);
+  @   assumes strlen(s) == 0;
+  @   assumes strlen(find) > 0;
   @   ensures \result == \null;
   @ behavior b3:
-  @   assumes strlen(s) >= strlen(find);
+  @   assumes strlen(s) >= strlen(find) > 0;
   @   assumes \exists integer i; 0 <= i <= (strlen(s) - strlen(find)) && contains_string_at_i(s, find, i) &&
-                 \forall integer j; 0 <= j < i ==> !contains_string_at_i(s, find, j);
+  @              \forall integer j; 0 <= j < i ==> !contains_string_at_i(s, find, j);
   @   ensures contains_string_at_i(\result, find, 0);
   @ behavior b4:
   @   assumes \forall integer i; 0 <= i < strlen(s) && s[i] != *find;
   @   ensures \result == \null;
   @ behavior b5:
   @   assumes strlen(s) >= strlen(find) && strlen(find) > 0;
-  @   assumes \forall integer i; 0 <= i < strlen(s) && !contains_string_at_i(s, find, i);
-  @   ensures \result == \null;
+  @   ensures  \forall integer i; 0 <= i < strlen(s) && !contains_string_at_i(s, find, i) ==> \result == \null;
  */
 char	*strstr(const char *s, const char *find);
 
