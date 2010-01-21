@@ -40,14 +40,15 @@ __warn_references(strcat,
     "warning: strcat() is almost always misused, please use strlcat()");
 #endif
 
-// Proven by Simplify
+// Proven by Z3 and for 1 pli Simplify
 
 // man is confusing as it mixes N version.
 
 /*@
 	requires valid_string(s);
 	requires valid_string(append);
-	requires disjoint_strings_len(s, append, strlen(append));
+	requires disjoint_strings(s, append);
+	requires disjoint_strings_len(s, append, strlen(s) + strlen(append));
 	requires \valid_range(s, 0, strlen(s) + strlen(append));
 	assigns s[..];
 	ensures strlen(s) == strlen{Old}(s) + strlen(append);
@@ -75,32 +76,32 @@ strcat(char *s, const char *append)
 	//@ ghost char *origAppend = append;
 
 	/*@ loop assigns s;
-			loop invariant 0 <= (s-save) <= strlen(save);
-			loop invariant \valid(s);
-			loop invariant \base_addr(s) == \base_addr(save);
-			loop invariant \forall integer k; 0 <= k < (s-save) ==> save[k] != 0;
-		*/
-		for (; *s; ++s);
-		//@ assert *s == '\0' && s == save + strlen(save);
-		//@ assert \valid_range(s, 0, strlen(append));
+		loop invariant 0 <= (s-save) <= strlen(save);
+		loop invariant \valid(s);
+		loop invariant \base_addr(s) == \base_addr(save);
+		loop invariant \forall integer k; 0 <= k < (s-save) ==> save[k] != 0;
+	*/
+	for (; *s; ++s);
+	//@ assert *s == '\0' && s == save + strlen(save);
+	//@ assert \valid_range(s, 0, strlen(append));
+	//@ assert \valid_range(s_cat, 0, strlen(append)); // had to add this to prove pli 4 and 8 below.
 
-		//@ ghost char *s_cat = s;
-		//@ ghost char *origAppend = append;
+	//@ ghost char *s_cat = s;
+	//@ ghost char *origAppend = append;
 
-		/*@ loop assigns s, save[s_cat-save..], append;
-			loop invariant \base_addr(s) == \base_addr(s_cat);
-			loop invariant \base_addr(append) == \base_addr(origAppend);
-			loop invariant \valid_range(origAppend, 0, strlen{Pre}(append));
-			loop invariant \valid_range(s_cat, 0, strlen{Pre}(append));
-			loop invariant (append-origAppend) == (s - s_cat);
-			loop invariant 0 <= (append-origAppend) <= (strlen(origAppend));
-			loop invariant \forall integer k; 0 <= k < (append-origAppend)  ==> origAppend[k] != 0;
-			loop invariant \forall integer k; 0 <= k < (append-origAppend) ==> save[k + (s_cat-save)] == origAppend[k];
-			loop invariant \forall integer k; 0 <= k < (append-origAppend)  ==> save[k + s_cat-save] != 0;
-			loop invariant \forall integer k; 0 <= k < (s_cat-save) ==> save[k] == \at(s[k], Pre);
-			loop invariant (append-origAppend) == (strlen(origAppend) + 1) ==> save[s_cat-save + append-origAppend - 1] == 0;
-		*/
-		while ((*s++ = *append++) != '\0');
+	/*@ loop assigns s, save[s_cat-save..], append;
+		loop invariant \base_addr(s) == \base_addr(s_cat);
+		loop invariant \base_addr(append) == \base_addr(origAppend);
+		loop invariant \valid_range(s_cat, 0, strlen{Pre}(append));
+		loop invariant (append-origAppend) == (s - s_cat);
+		loop invariant 0 <= (append-origAppend) <= (strlen(origAppend)) + 1;
+		loop invariant \forall integer k; 0 <= k < (append-origAppend)  ==> origAppend[k] != 0;
+		loop invariant \forall integer k; 0 <= k < (append-origAppend) <= strlen(origAppend) ==> s_cat[k] == origAppend[k];
+		loop invariant \forall integer k; 0 <= k < (append-origAppend)  ==> save[k + s_cat-save] != 0;
+		loop invariant \forall integer k; (append-origAppend) <= k <= strlen(origAppend) ==> origAppend[k] == \at(append[k], Pre);
+		loop invariant \forall integer k; 0 <= k < (s_cat-save) ==> save[k] == \at(s[k], Pre);
+	*/
+	while ((*s++ = *append++) != '\0');
 
 	//@ assert s_cat[append-origAppend - 1] == 0;
 	//@ assert strlen(s_cat) == append-origAppend -1;

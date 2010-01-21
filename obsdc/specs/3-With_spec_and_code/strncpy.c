@@ -49,23 +49,23 @@
 // ? had to add < int_max for safety: overflow.
 //param n different in man
 
-/*@ requires valid_string(dst);
-    requires valid_string(src);
+/*@ requires valid_string(src);
     requires n < INT_MAX;
-    requires \valid_range(dst, 0, minimum(n, strlen(src)));
+    requires \valid_range(dst, 0, n);
+    requires disjoint_strings_len2(dst, src, n);
     ensures \result == dst;
     behavior b1:
-		assumes n == 0 || strlen(src) == 0;
+		assumes n == 0;
 		assigns \nothing;
 	behavior b2:
 		assumes n > 0 && strlen(src) > 0 && strlen(src) > n;
-		assigns dst[0..n-1];
-		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == \old(src[i]);
+		assigns dst[..];
+		ensures \forall integer i; 0 <= i < n ==> dst[i] == src[i];
 	behavior b3:
 		assumes n > 0 && strlen(src) > 0 && strlen(src) <= n;
-		assigns dst[0..n-1];
-		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == \old(src[i]);
-		ensures \forall integer i; strlen(src) <= i <= n && dst[i] == '\0';
+		assigns dst[..];
+		ensures \forall integer i; 0 <= i <= strlen(src) ==> dst[i] == src[i];
+		ensures \forall integer i; strlen(src) < i < n ==> dst[i] == 0;
  */
 char *
 strncpy(char *dst, const char *src, size_t n)
@@ -73,26 +73,29 @@ strncpy(char *dst, const char *src, size_t n)
 	if (n != 0) {
 		char *d = dst;
 		const char *s = src;
-		//@ ghost int i = 0;
 		//@ ghost int origN = n;
-		//@ ghost int src_len = strlen(src);
-
-		/*@ loop assigns d, s, n, dst[0..origN-1];
-		    loop invariant n >=0;
-			loop invariant i <= origN && i <= src_len;
-			loop invariant \valid(d) && valid_string(s);
-			loop invariant \forall integer k; 0 <= k < i ==> dst[k] == src[k];
+		/*@ loop assigns d, s, n, dst[..];
+		    loop invariant origN >= n >= 0;
+			loop invariant 0 <= s-src <= strlen(src);
+			loop invariant 0 <= d-dst <= origN;
+			loop invariant d-dst == (origN - n);
+			loop invariant \base_addr(d) == \base_addr(dst);
+			loop invariant \base_addr(s) == \base_addr(src);
+			loop invariant \valid(d) && \valid(s);
+			loop invariant \forall integer k; 0 <= k < (s-src)  ==> dst[k] == src[k];
+			loop invariant \forall integer k; (origN - n) <= k < strlen(src) ==> src[k] == \at(src[k], Pre);
 		*/
 		do {
-			if ((*d++ = *s++) == 0) { //@ ghost i++;
+			if ((*d++ = *s++) == 0){
 				/* NUL pad the remaining n-1 bytes */
-				//@ ghost int j = i;
-				/*@ loop assigns d, n, dst[src_len..origN-1];
-					loop invariant n >= 0 && j <= origN;
-					loop invariant \forall integer k; src_len <= k < j ==> dst[k] == 0;
+				//@ ghost int c2 = (origN - n);
+				/*@ loop assigns d, n, dst[..];
+					loop invariant \base_addr(d) == \base_addr(dst);
+					loop invariant origN >= n >= 0;
+					loop invariant \forall integer k; c2 < k < (d-dst) ==> dst[k] == 0;
 				*/
 				while (--n != 0)
-					*d++ = 0; //@ ghost j++;
+					*d++ = 0;
 				break;
 			}
 		} while (--n != 0);

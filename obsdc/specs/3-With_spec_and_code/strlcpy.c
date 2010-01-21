@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include <string.h>
 
-// Proven by Simplify.
+// Proven by Z3 (-1 po in b2) +2 pli by simplify.
 
 // param name siz different.
 
@@ -30,15 +30,35 @@
  */
 /*@ requires \valid_range(dst, 0, siz);
     requires valid_string(src);
+    requires disjoint_strings_len(dst, src, siz);
+    requires disjoint_strings_len(dst, src, strlen(src));
+    requires strlen(src) < INT_MAX;
     ensures \result == strlen(src);
-    behavior b1:
+    behavior b0:
 		assumes siz == 0;
 		assigns \nothing;
+	behavior b1:
+		assumes siz == 1;
+		assigns dst[..];
+		ensures dst[0] == 0;
 	behavior b2:
-		assumes siz > 0;
-		assigns dst;
-		ensures \forall integer i; 0 <= i < minimum(siz, strlen(src)) ==> dst[i] == \old(src[i]);
-		ensures dst[minimum(siz, strlen(src))] == 0;
+		assumes siz > 1;
+		assumes siz <= strlen(src);
+		assigns dst[..];
+		ensures \forall integer i; 0 <= i < (siz - 1) ==> dst[i] == src[i];
+		ensures dst[siz - 1] == 0;
+	behavior b3:
+		assumes siz > 1;
+		assumes siz > (strlen(src) + 1);
+		assigns dst[..];
+		ensures \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
+		ensures dst[strlen(src)] == 0;
+	behavior b4:
+		assumes siz > 1;
+		assumes siz == (strlen(src) + 1);
+		assigns dst[..];
+		ensures \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
+		ensures dst[siz - 1] == 0;
  */
 size_t
 strlcpy(char *dst, const char *src, size_t siz)
@@ -47,21 +67,26 @@ strlcpy(char *dst, const char *src, size_t siz)
 	const char *s = src;
 	size_t n = siz;
 
-	//@ ghost int lenSrc = strlen(src);
-
 	/* Copy as many bytes as will fit */
 	if (n != 0) {
-		//@ ghost int i = 0;
 		/*@
-		   loop assigns n, d, s;
-		   loop invariant 0 <= n <= siz;
-		   loop invariant 0 <= i <= minimum(siz, strlen(src));
-		   loop invariant valid_string(s) && \valid(d);
-		   loop invariant \forall integer k; 0 <= k < i ==> dst[k] == src[k];
-		   loop invariant \forall integer k; 0 <= k < i ==> src[k] != '\0';
+		   loop assigns n, d, s, dst[..];
+		   loop variant n;
+		   loop invariant 0 < n <= siz;
+		   loop invariant 0 <= (s-src) <= strlen(src);
+		   for b2 : loop invariant 0 <= (s-src) < siz;
+		   loop invariant \base_addr(s) == \base_addr(src);
+		   loop invariant \base_addr(d) == \base_addr(dst);
+		   loop invariant \valid_range(dst, 0, siz);
+		   loop invariant \valid_range(src, 0, strlen(src));
+		   loop invariant (d-dst) == (s-src);
+		   loop invariant (siz - n) == (s-src);
+		   loop invariant \forall integer k; 0 <= k < (s-src) ==> dst[k] == src[k];
+		   loop invariant \forall integer k; 0 <= k < (s-src) ==> src[k] != '\0';
+		   loop invariant \forall integer k; 0 <= k <= strlen(src) ==> src[k] == \at(src[k], Pre);
 		 */
 		while (--n != 0) {
-			if ((*d++ = *s++) == '\0') //@ ghost i++;
+			if ((*d++ = *s++) == '\0')
 				break;
 		}
 	}
@@ -70,15 +95,20 @@ strlcpy(char *dst, const char *src, size_t siz)
 	if (n == 0) {
 		if (siz != 0)
 			*d = '\0';		/* NUL-terminate dst */
+		//@ ghost char *p = s;
 		/*@
 		 loop assigns s;
-		 loop invariant valid_string(s);
-		 loop invariant s - src <= strlen(src);
-		 loop invariant *s != 0;
+		 loop invariant \base_addr(s) == \base_addr(src);
+		 loop invariant \base_addr(s) == \base_addr(p);
+		 loop invariant \valid_range(src, 0, strlen(src));
+		 loop invariant p - src <= s - src <= strlen(src);
+		 loop invariant \forall integer k; p - src <= k < (s-src)  ==> src[k] != '\0';
+		 loop invariant \forall integer k; 0 <= k <= strlen(src) ==> src[k] == \at(src[k], Pre);
 		*/
 		while (*s++)
 			;
 	}
-	//@ assert s-src == lenSrc;
+	//@ assert *(s-1) == 0;
+	//@ assert (s - src - 1) == strlen(src);
 	return(s - src - 1);	/* count does not include NUL */
 }

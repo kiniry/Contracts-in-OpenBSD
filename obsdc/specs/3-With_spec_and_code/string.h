@@ -28,7 +28,7 @@ typedef	__size_t	size_t;
 
 /*@ predicate disjoint_strings_len{L}(char *s1, char *s2, integer l) =
      \forall integer i, j;
-        0 <= i <= (strlen(s1) + l) && 0 <= j <= strlen(s2) ==> s1 + i != s2 + j;
+        0 <= i <= l && 0 <= j <= strlen(s2) ==> s1 + i != s2 + j;
 */
 
 /*@ predicate disjoint_strings_len2{L}(char *s1, char *s2, integer l) =
@@ -39,7 +39,8 @@ typedef	__size_t	size_t;
 __BEGIN_DECLS
 /*@ requires valid_string(s);
     requires valid_string(append);
-    requires disjoint_strings_len(s, append, strlen(append));
+    requires disjoint_strings(s, append);
+    requires disjoint_strings_len(s, append, strlen(s) + strlen(append));
     requires \valid_range(s, 0, strlen(s) + strlen(append));
 	assigns s[..];
     ensures strlen(s) == strlen{Old}(s) + strlen(append);
@@ -132,23 +133,23 @@ char	*strncat(char *dst, const char *src, size_t n)
 		assigns \nothing;
  */
 int	 strncmp(const char *s1, const char *s2, size_t n);
-/*@ requires valid_string(dst);
-    requires valid_string(src);
+/*@ requires valid_string(src);
     requires n < INT_MAX;
-    requires \valid_range(dst, 0, minimum(n, strlen(src)));
+    requires \valid_range(dst, 0, n);
+    requires disjoint_strings_len2(dst, src, n);
     ensures \result == dst;
     behavior b1:
-		assumes n == 0 || strlen(src) == 0;
+		assumes n == 0;
 		assigns \nothing;
 	behavior b2:
 		assumes n > 0 && strlen(src) > 0 && strlen(src) > n;
-		assigns dst[0..n-1];
-		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == \old(src[i]);
+		assigns dst[..];
+		ensures \forall integer i; 0 <= i < n ==> dst[i] == src[i];
 	behavior b3:
 		assumes n > 0 && strlen(src) > 0 && strlen(src) <= n;
-		assigns dst[0..n-1];
-		ensures \forall integer i; 0 <= i < minimum(n, strlen(src)) ==> dst[i] == \old(src[i]);
-		ensures \forall integer i; strlen(src) <= i <= n && dst[i] == '\0';
+		assigns dst[..];
+		ensures \forall integer i; 0 <= i <= strlen(src) ==> dst[i] == src[i];
+		ensures \forall integer i; strlen(src) < i < n ==> dst[i] == 0;
  */
 char	*strncpy(char *dst, const char *src, size_t n)
 		__attribute__ ((__bounded__(__string__,1,3)));
@@ -226,15 +227,35 @@ size_t	 strlcat(char *dst, const char *src, size_t siz)
 		__attribute__ ((__bounded__(__string__,1,3)));
 /*@ requires \valid_range(dst, 0, siz);
     requires valid_string(src);
+    requires disjoint_strings_len(dst, src, siz);
+    requires disjoint_strings_len(dst, src, strlen(src));
+    requires strlen(src) < INT_MAX;
     ensures \result == strlen(src);
-    behavior b1:
+    behavior b0:
 		assumes siz == 0;
 		assigns \nothing;
+	behavior b1:
+		assumes siz == 1;
+		assigns dst[..];
+		ensures dst[0] == 0;
 	behavior b2:
-		assumes siz > 0;
-		assigns dst;
-		ensures \forall integer i; 0 <= i < minimum(siz, strlen(src)) ==> dst[i] == \old(src[i]);
-		ensures dst[minimum(siz, strlen(src))] == 0;
+		assumes siz > 1;
+		assumes siz <= strlen(src);
+		assigns dst[..];
+		ensures \forall integer i; 0 <= i < (siz - 1) ==> dst[i] == src[i];
+		ensures dst[siz - 1] == 0;
+	behavior b3:
+		assumes siz > 1;
+		assumes siz > (strlen(src) + 1);
+		assigns dst[..];
+		ensures \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
+		ensures dst[strlen(src)] == 0;
+	behavior b4:
+		assumes siz > 1;
+		assumes siz == (strlen(src) + 1);
+		assigns dst[..];
+		ensures \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
+		ensures dst[siz - 1] == 0;
  */
 size_t	 strlcpy(char *dst, const char *src, size_t siz)
 		__attribute__ ((__bounded__(__string__,1,3)));
