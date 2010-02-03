@@ -40,7 +40,7 @@ __warn_references(strcpy,
     "warning: strcpy() is almost always misused, please use strlcpy()");
 #endif
 
-// Proven by Z3 + for 1 p-l-i by Simplify
+// Proven by Z3 (default behavior 30/31, safety: 8/8) Simplify proves the missing PO (pli).
 
 // Params don't match man.
 

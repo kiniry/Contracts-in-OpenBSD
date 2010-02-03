@@ -31,34 +31,25 @@
 /*@ requires \valid_range(dst, 0, siz);
     requires valid_string(src);
     requires disjoint_strings_len(dst, src, siz);
+    requires disjoint_strings_len2(dst, src, siz);
     requires disjoint_strings_len(dst, src, strlen(src));
+    requires disjoint_strings_len2(dst, src, strlen(dst));
     requires strlen(src) < INT_MAX;
-    ensures \result == strlen(src);
-    behavior b0:
-		assumes siz == 0;
-		assigns \nothing;
 	behavior b1:
-		assumes siz == 1;
-		assigns dst[..];
-		ensures dst[0] == 0;
-	behavior b2:
-		assumes siz > 1;
-		assumes siz <= strlen(src);
+		assumes siz >= 1;
+		assumes siz <= strlen(src) + 1;
 		assigns dst[..];
 		ensures \forall integer i; 0 <= i < (siz - 1) ==> dst[i] == src[i];
 		ensures dst[siz - 1] == 0;
-	behavior b3:
-		assumes siz > 1;
+		ensures \false;
+		ensures \result == strlen(src);
+	behavior b2:
 		assumes siz > (strlen(src) + 1);
 		assigns dst[..];
-		ensures \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
-		ensures dst[strlen(src)] == 0;
-	behavior b4:
-		assumes siz > 1;
-		assumes siz == (strlen(src) + 1);
-		assigns dst[..];
-		ensures \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
-		ensures dst[siz - 1] == 0;
+		ensures \forall integer i; 0 <= i <= strlen(src) ==> dst[i] == src[i];
+		ensures \false;
+		ensures \result == strlen(src);
+	disjoint behaviors  b0, b1, b2;
  */
 size_t
 strlcpy(char *dst, const char *src, size_t siz)
@@ -66,44 +57,50 @@ strlcpy(char *dst, const char *src, size_t siz)
 	char *d = dst;
 	const char *s = src;
 	size_t n = siz;
-
+	//@ assert src[strlen(src)]  == 0;
 	/* Copy as many bytes as will fit */
 	if (n != 0) {
 		/*@
-		   loop assigns n, d, s, dst[..];
-		   loop variant n;
-		   loop invariant 0 < n <= siz;
-		   loop invariant 0 <= (s-src) <= strlen(src);
-		   for b2 : loop invariant 0 <= (s-src) < siz;
-		   loop invariant \base_addr(s) == \base_addr(src);
-		   loop invariant \base_addr(d) == \base_addr(dst);
-		   loop invariant \valid_range(dst, 0, siz);
-		   loop invariant \valid_range(src, 0, strlen(src));
-		   loop invariant (d-dst) == (s-src);
-		   loop invariant (siz - n) == (s-src);
-		   loop invariant \forall integer k; 0 <= k < (s-src) ==> dst[k] == src[k];
-		   loop invariant \forall integer k; 0 <= k < (s-src) ==> src[k] != '\0';
-		   loop invariant \forall integer k; 0 <= k <= strlen(src) ==> src[k] == \at(src[k], Pre);
+		   for b1, b2 : loop assigns n, d, s, dst[..];
+		   for b1, b2: loop assigns n;
+		   for b1, b2: loop variant n;
+		   for b1, b2: loop invariant 0 < n <= siz;
+		   for b2 : loop invariant 0 <= (s-src) <= strlen(src);
+		   for b1 : loop invariant 0 <= (s-src) < siz <= strlen(src) + 1;
+		   for b1, b2: loop invariant \base_addr(s) == \base_addr(src);
+		   for b1, b2: loop invariant \base_addr(d) == \base_addr(dst);
+		   for b1, b2: loop invariant \valid_range(dst, 0, siz);
+		   for b1, b2: loop invariant \valid_range(src, 0, strlen(src));
+		   for b1, b2: loop invariant (d-dst) == (s-src);
+		   for b1, b2: loop invariant (siz - n) == (s-src);
+		   for b1 : loop invariant \forall integer k; 0 <= k < (s-src) <= siz ==> dst[k] == src[k];
+		   for b2 : loop invariant \forall integer k; 0 <= k < (s-src) ==> dst[k] == src[k];
+		   for b1 : loop invariant \forall integer k; 0 <= k < (s-src) <= strlen(src) ==> src[k] != '\0';
+		   for b2:  loop invariant \forall integer k; 0 <= k < (s-src) <= strlen(src) ==> src[k] != '\0';
+		   for b1, b2: loop invariant \forall integer k; 0 <= k <= strlen(src) ==> src[k] == \at(src[k], Pre);
 		 */
 		while (--n != 0) {
 			if ((*d++ = *s++) == '\0')
 				break;
 		}
+		//@ assert siz > strlen(src) + 1 ==> s-src == strlen(src) + 1;
 	}
 
 	/* Not enough room in dst, add NUL and traverse rest of src */
 	if (n == 0) {
 		if (siz != 0)
 			*d = '\0';		/* NUL-terminate dst */
+		//@ assert (d-dst) == (siz - 1);
+		//@ assert siz <= strlen(src) + 1;
 		//@ ghost char *p = s;
 		/*@
-		 loop assigns s;
-		 loop invariant \base_addr(s) == \base_addr(src);
-		 loop invariant \base_addr(s) == \base_addr(p);
-		 loop invariant \valid_range(src, 0, strlen(src));
-		 loop invariant p - src <= s - src <= strlen(src);
-		 loop invariant \forall integer k; p - src <= k < (s-src)  ==> src[k] != '\0';
-		 loop invariant \forall integer k; 0 <= k <= strlen(src) ==> src[k] == \at(src[k], Pre);
+		 for b0, b1: loop assigns s;
+		 for b0, b1: loop invariant \base_addr(s) == \base_addr(src);
+		 for b0, b1: loop invariant \base_addr(s) == \base_addr(p);
+		 for b0, b1: loop invariant \valid_range(src, 0, strlen(src));
+		 for b0, b1: loop invariant p - src <= s - src <= strlen(src) + 1;
+		 for b0, b1: loop invariant \forall integer k; p - src <= k < (s-src) <= strlen(src) ==> src[k] != '\0';
+		 for b0, b1: loop invariant \forall integer k; 0 <= k <= strlen(src) ==> src[k] == \at(src[k], Pre);
 		*/
 		while (*s++)
 			;

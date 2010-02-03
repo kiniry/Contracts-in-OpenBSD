@@ -38,7 +38,7 @@
 #define NULL	((char *)0)
 #endif
 
-// Proven by alt-ergo
+// Proven by alt-ergo (b1: 2/2, b2: 2/2, b3: 2/2, b4: 2/2, default behavior 17/17, safety: 4/4).
 // Doc Bug ? : The terminating NUL character is considered part of the
 //     string.  If c is `\0', strchr() locates the terminating `\0'.
 

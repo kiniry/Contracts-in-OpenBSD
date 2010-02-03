@@ -46,22 +46,51 @@
   requires valid_string(src);
   requires valid_string(dst);
   requires \valid_range(dst, 0, siz);
-  requires disjoint_strings(src, dst);
-  assigns dst;
-  ensures \result == strlen(src) + minimum(siz, strlen(\old(dst)));
+  requires disjoint_strings(dst, src);
+  requires disjoint_strings_len2(dst, src, strlen(dst) + strlen(src));
+  requires disjoint_strings_len(dst, src, strlen(dst) + strlen(src));
+  requires disjoint_strings_len2(dst, src, siz);
+  requires disjoint_strings_len(dst, src, siz);
   behavior b1:
 	  assumes siz == 0;
 	  assigns \nothing;
+	  ensures \result == strlen(src);
   behavior b2:
-      assumes siz > 0 && strlen(dst) < siz;
-	  ensures strlen(dst) == \old(strlen(dst)) + minimum(siz - \old(strlen(dst)), strlen(src));
-	  ensures \forall integer k; 0 <= k < \old(strlen(dst)) ==> dst[k] == \old(dst[k]);
-	  ensures \forall integer k; 0 <= k < minimum(siz - \old(strlen(dst)) - 1, strlen(src)) ==>
-			dst[k + \old(strlen(dst))] == src[k];
+      assumes siz > 0 && strlen(dst) < siz && strlen(src) > 0;
+      assumes strlen(src) < (siz - strlen(dst));
+      assumes 1 < (siz - strlen(dst));
+	  ensures strlen(dst) == strlen{Old}(dst) + strlen(src);
+	  ensures \forall integer k; 0 <= k < strlen{Old}(dst) ==> dst[k] == \old(dst[k]);
+	  ensures \forall integer k; 0 <= k < strlen(src) ==> dst[k + strlen{Old}(dst)] == src[k];
 	  ensures dst[strlen(dst)] == '\0';
-  behavior b3:
+	  assigns dst[..];
+	  ensures \result == strlen(src) + strlen{Old}(dst);
+ behavior b3:
+      assumes siz > 0 && strlen(dst) < siz && strlen(src) > 0;
+      assumes strlen(src) > (siz - strlen(dst));
+      assumes 1 < (siz - strlen(dst));
+	  ensures strlen(dst) == siz - 1;
+	  ensures \forall integer k; 0 <= k < strlen{Old}(dst) ==> dst[k] == \old(dst[k]);
+	  ensures \forall integer k; 0 <= k < (siz - strlen(dst)) ==> dst[k + strlen{Old}(dst)] == src[k];
+	  ensures dst[strlen(dst)] == '\0';
+	  assigns dst[..];
+	  ensures \result == strlen(src) + strlen{Old}(dst);
+  behavior b4:
       assumes siz > 0 && strlen(dst) >= siz;
 	  assigns \nothing;
+	  ensures \result == strlen(src) + siz;
+  behavior b5:
+      assumes siz > 0 && strlen(src) == 0;
+	  assigns dst[..];
+	  ensures \forall integer k; 0 <= k < strlen{Old}(dst) ==> dst[k] == \old(dst[k]);
+	  ensures dst[strlen(dst)] == '\0';
+	  ensures \result == strlen{Old}(dst);
+  behavior b6:
+      assumes siz > 0 && 0 == (siz - strlen(dst));
+	  assigns dst[..];
+	  ensures \forall integer k; 0 <= k < strlen{Old}(dst) ==> dst[k] == \old(dst[k]);
+	  ensures dst[strlen(dst)] == '\0';
+	  ensures \result == strlen{Old}(dst) + strlen(src);
  */
 size_t
 strlcat(char *dst, const char *src, size_t siz)
@@ -70,43 +99,59 @@ strlcat(char *dst, const char *src, size_t siz)
 	const char *s = src;
 	size_t n = siz;
 	size_t dlen;
-	//@ ghost int lenSrc = strlen(src);
-	//@ ghost int lenDst = strlen(dst);
 
 	/* Find the end of dst and adjust bytes left but don't go past end */
-	//@ ghost int cnt = 0;
 	/*@
-	  @ loop assigns n, d;
-	  @ loop invariant 0 <= n;
-	  @ loop invariant (d - dst) < lenDst;
-	  @ loop invariant cnt < minimum(siz, lenDst);
-	  @ loop invariant \forall integer k; 0 <= k < cnt ==> dst[k] != '\0';
+	    loop assigns n, d;
+	    loop invariant \base_addr(d) == \base_addr(dst);
+	    loop invariant \valid(d);
+	    loop invariant siz < strlen{Pre}(dst) ==> 0 <= (d - dst) <= siz;
+	    loop invariant siz >= strlen{Pre}(dst) ==> 0 <= (d - dst) <= strlen{Pre}(dst); ;
+	  @ loop invariant \forall integer k; 0 <= k < (d-dst) ==> dst[k] != '\0';
 	 */
 	while (n-- != 0 && *d != '\0')
-		 d++; //@ ghost cnt++;
+		 d++;
+	//@ assert siz < strlen{Pre}(dst) ==> (d-dst) == siz;
+	//@ assert siz >= strlen{Pre}(dst) ==> (d-dst) == strlen{Pre}(dst);
+	//@ assert siz >= dlen;
 	dlen = d - dst;
 	n = siz - dlen;
-    //@ assert (d-dst) == minimum(lenDst, siz);
 	if (n == 0)
 		return(dlen + strlen(s));
-	//@ assert siz > lenDst;
-
-	//@ ghost int i = 0;
-	//@ ghost int orig_n = n;
+	//@ assert n > 0;
+	//@ assert siz > strlen{Pre}(dst);
+	//@ assert (d-dst) == strlen{Pre}(dst);
+	//@ assert n == (siz - strlen{Pre}(dst));
+	//@ ghost char *p = d;
+	//@ assert p-dst == strlen{Pre}(dst);
+	//@ assert \forall integer k; 0 <= k < (d-p) ==> dst[k] == \at(dst[k], Pre);
 	/*@
-	  @ loop assigns n, s;
-	  @ loop invariant 0 <= i < lenSrc;
-	  @ loop invariant \forall integer k; 0 <= k < i ==> src[k] != 0;
-	  @ loop invariant \forall integer k; 0 <= k < i && n> 0   ==> dst[k + lenDst] == src[k];
+	  @ loop assigns n, s, d, dst[p-dst..];
+	  @ loop invariant 1 <= n <= (siz - strlen{Pre}(dst));
+	  @ loop invariant \base_addr(d) == \base_addr(dst);
+	  @ loop invariant \base_addr(s) == \base_addr(src);
+	  @ loop invariant 0 <= (s-src) <= strlen(src);
+	  @ loop invariant \valid(s);
+	  @ loop invariant \valid(d);
+	  @ loop invariant \valid_range(dst, 0, siz);
+	    for b2, b3: loop invariant n > 1 ==> d-p == s-src;
+	    for b2, b3: loop invariant (siz - strlen{Pre}(dst)) - n == d-p;
+	  @ loop invariant \forall integer k; 0 <= k < (s-src) ==> src[k] != 0;
+	  @ loop invariant \forall integer k; 0 <= k <= strlen(src) ==> src[k] == \at(src[k], Pre);
+	    loop invariant \forall integer k; 0 <= k < strlen{Pre}(dst) ==> dst[k] == \at(dst[k], Pre);
+	  @ for b2, b3: loop invariant 0 <= d-p <= (siz - strlen{Pre}(dst)) && (d-p) <= strlen(src);
+	  @ for b2, b3: loop invariant \forall integer k; 0 <= k < (d-p) <= strlen(src)  ==> dst[k + strlen{Pre}(dst)] == src[k];
 	 */
 	while (*s != '\0') {
 		if (n != 1) {
 			*d++ = *s;
 			n--;
 		}
-		s++; //@ ghost i++;
+		s++;
 	}
 	*d = '\0';
-
+	//@ assert dst[d-dst] == 0;
+	//@ assert d-dst == strlen(dst);
+	//@ assert s-src == strlen(src);
 	return(dlen + (s - src));	/* count does not include NUL */
 }

@@ -40,7 +40,7 @@ __warn_references(strcat,
     "warning: strcat() is almost always misused, please use strlcat()");
 #endif
 
-// Proven by Z3 and for 1 pli Simplify
+// Proven by Z3 (default behavior 77/78, safety 10/10), simplify proves the missing PO (pli).
 
 // man is confusing as it mixes N version.
 

@@ -38,7 +38,7 @@
 #include <lib/libkern/libkern.h>
 #endif
 
-// Proven by alt-ergo
+// Proven by alt-ergo (default behavior 36/36, safety: 20/20)
 
 // Code change! Bug 306 (fixed in Why 2.2)
 // consequently had to take unsigned casts out.

@@ -35,7 +35,7 @@
 #include <lib/libkern/libkern.h>
 #endif
 
-// Proven by z3 + for 1 p-l-i alt-ergo.
+// Proven by z3 (normal behavior 58/59, safety: 26/26). Alt-ergo proves missing PO (pli).
 
 // Code change! Bug 306 (fixed in Why 2.2)
 // consequently had to take unsigned casts out.
@@ -49,23 +49,12 @@
      requires valid_string(s2);
      requires n < INT_MAX;
      assigns \nothing;
-     behavior b1:
-		assumes n == 0;
-		ensures \result == 0;
-		assigns \nothing;
-	 behavior b2:
-		assumes n > 0;
-        assumes \forall integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i];
-        ensures \result == 0;
-        assigns \nothing;
-     behavior b3:
-	 	assumes n > 0;
-	 	assumes \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] != s2[i];
-        ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] < s2[i] &&
-			(\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result < 0 ;
-        ensures \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] > s2[i] &&
-			(\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result > 0;
-		assigns \nothing;
+     ensures n == 0 ==> \result == 0;
+	 ensures (n > 0 ==> \forall integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] == s2[i]) ==> \result == 0;
+	 ensures \result < 0 ==> (n > 0 && \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] < s2[i] ==>
+	 		(\forall integer k; 0 <= k < i ==> s1[k] == s2[k])) ;
+	 ensures \result > 0 ==> (n > 0 && \exists integer i; 0 <= i <= minimum(n-1, minimum(strlen(s1), strlen(s2))) && s1[i] > s2[i] ==>
+			(\forall integer k; 0 <= k < i ==> s1[k] == s2[k]));
  */
 int
 strncmp(const char *s1, const char *s2, size_t n)

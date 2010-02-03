@@ -38,7 +38,7 @@
 #define NULL	((char *)0)
 #endif
 
-// Proven by alt-ergo and z3.
+// Proven by Simplify b1: 2/2, b2: 2/2, b3: 4/4, b4: 2/2 normal behavior 21/21, safety 2/4. 2 safety POs (?) proven by Alt-ergo and Z3.
 
 // (doc?) bug: '\0' ==> null.
 /*@ requires valid_string(s);
@@ -62,16 +62,18 @@ char *
 strrchr(const char *s, int c)
 {
 	char *t = NULL;
+	//@ assert \forall integer i; 0 <= i < strlen(s) ==> s[i] != 0;
 	//@ ghost char *orig = s;
-	/*@ loop assigns s;
+	/*@ loop assigns s, t;
 		loop invariant \valid(s);
 		loop invariant \base_addr(s) == \base_addr(orig);
 		loop invariant 0 <= (s-orig) <= strlen(orig);
 		loop invariant \forall integer k; 0 <= k < (s-orig) ==> orig[k] != 0;
-		loop invariant \exists integer k; 0 <= k < (s-orig) && orig[k] == c ==> t != \null;
-		loop invariant strlen(orig) == 0 ==> t == \null;
-		loop invariant c == 0 ==> t == \null;
 		loop invariant t == \null || *t == c;
+		for b1: loop invariant t == \null;
+		for b2: loop invariant t == \null;
+		for b3: loop invariant (\exists integer k; 0 <= k < (s-orig) && orig[k] == c)  ==> t != \null;
+		for b4: loop invariant t == \null;
 	 */
 	while (*s) {
 		if (*s == c)

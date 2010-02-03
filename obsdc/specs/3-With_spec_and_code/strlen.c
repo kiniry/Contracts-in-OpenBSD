@@ -35,7 +35,7 @@
 #include <lib/libkern/libkern.h>
 #endif
 
-// Proven by alt-ergo.
+// Proven by alt-ergo (default behavior 13/13, safety 5/5).
 
 // param name mismatch with man.
 
