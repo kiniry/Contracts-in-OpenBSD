@@ -45,7 +45,8 @@ __warn_references(strcpy,
 // Params don't match man.
 
 /*@ requires valid_string(from);
-    requires disjoint_strings_len2(to, from, strlen(from));
+    requires disjoint_strings(to, from);
+    requires disjoint_strings_len(to, from, strlen(from));
     requires \valid_range(to, 0, strlen(from));
     assigns to[0..];
     ensures \forall integer i; 0 <= i < strlen(from) ==> to[i] == from[i];

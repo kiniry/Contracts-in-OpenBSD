@@ -47,12 +47,12 @@
  * Compare strings.
  */
 /*@  requires valid_string(s1);
-  @  requires valid_string(s2);
-  @  assigns \nothing;
-  @  ensures (strlen(s1) == strlen(s2) && \forall integer i; 0 <= i <= strlen(s1) && s1[i] == s2[i]) ==> \result == 0;
-  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s1[i] <  s2[i]  &&
+     requires valid_string(s2);
+     assigns \nothing;
+     ensures (strlen(s1) == strlen(s2) && \forall integer i; 0 <= i <= strlen(s1) && s1[i] == s2[i]) ==> \result == 0;
+     ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s1[i] <  s2[i]  &&
 		  (\forall integer k; 0 <= k < i ==> s1[k] == s2[k])  ==> \result < 0;
-  @  ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s2[i] >  s1[i] &&
+     ensures \exists integer i; 0<=i<= strlen(s1) && 0<=i<= strlen(s2) && s2[i] >  s1[i] &&
 		  (\forall integer k; 0 <= k < i ==> s1[k] == s2[k]) ==> \result > 0;
  */
 int

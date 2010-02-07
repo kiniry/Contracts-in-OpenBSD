@@ -40,9 +40,9 @@
 // param name mismatch with man.
 
 /*@ requires valid_string(str);
-  @ assigns \nothing;
-  @ ensures \result == strlen(str);
-  @*/
+    assigns \nothing;
+    ensures \result == strlen(str);
+*/
 size_t
 strlen(const char *str)
 {
