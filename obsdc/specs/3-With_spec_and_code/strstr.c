@@ -33,7 +33,7 @@
 
 #include <string.h>
 
-// Proven by Z3 (b1: 3/3, b2: 3/3, b3: 3/3, b4: 3/3, b5: 3/3, default: 39/40 (assertion), safety: 12/13 ==> for strncmp pre-call).
+// Proven by Z3 (b1: 3/3, b2: 3/3, b3: 3/3, b4: 3/3, b5: 3/3, default: 28/30 (assertion, simplify proves missing pli), safety: 12/13 ==> for strncmp pre-call).
 
 // man params don't match.
 
@@ -49,17 +49,19 @@
     assumes strlen(find) == 0;
     ensures \result == s;
   behavior b2:
-    assumes strlen(s) == 0;
+    assumes strlen(s) == 0 || strlen(s) < strlen(find);
     assumes strlen(find) > 0;
     ensures \result == \null;
   behavior b3:
+    assumes strlen(s) > 0;
+    assumes strlen(find) > 0;
+    assumes \forall integer i; 0 <= i < strlen(s) && s[i] != *find;
+    ensures \result == \null;
+  behavior b4:
     assumes strlen(s) >= strlen(find) > 0;
     assumes \exists integer i; 0 <= i <= (strlen(s) - strlen(find)) && contains_string_at_i(s, find, i) &&
                \forall integer j; 0 <= j < i ==> !contains_string_at_i(s, find, j);
     ensures contains_string_at_i(\result, find, 0);
-  behavior b4:
-    assumes \forall integer i; 0 <= i < strlen(s) && s[i] != *find;
-    ensures \result == \null;
   behavior b5:
     assumes strlen(s) >= strlen(find) && strlen(find) > 0;
     ensures \forall integer i; 0 <= i < strlen(s) && !contains_string_at_i(s, find, i) ==> \result == \null;
@@ -84,15 +86,11 @@ strstr(const char *s, const char *find)
 			/*@ loop assigns s;
 			    loop invariant \base_addr(s) == \base_addr(orig);
 			    loop invariant \base_addr(s) == \base_addr(p);
-		        loop invariant \valid_range(s, 0, strlen(s));
+		        loop invariant \valid(s);
 		        loop variant strlen(s);
-		        loop invariant valid_string(orig);
 			    loop invariant 0 <= s - orig <= strlen(orig);
-			    loop invariant 0 <= s - p <= (strlen(orig) - (p-orig));
 			    loop invariant \forall integer j; 0 <= j < (s-p) ==> orig[j + p - orig] != 0;
 			    loop invariant \forall integer j; 0 <= j < (s-p) ==> orig[j + p - orig] != c;
-			    loop invariant \forall integer k; 0 <= k < (s-orig) ==> orig[k] == \at(s[k], Pre);
-			    loop invariant \forall integer k; 0 <= k < (s-orig) ==> origFind[k] == \at(find[k], Pre);
 			*/
 			do {
 				if ((sc = *s++) == 0)

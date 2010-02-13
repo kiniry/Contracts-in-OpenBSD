@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include <string.h>
 
-// Proven by Z3 (b0 : 9/9, b1: 27/27 b2: 18/18 Default: 169/169 Safety: 71/71).
+// Proven by Z3 (b0 : 9/9, b1: 27/27 b2: 18/18 Default: 168/169 (assertion PO) Safety: 71/71).
 
 // param name siz different.
 

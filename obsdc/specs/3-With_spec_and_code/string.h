@@ -93,8 +93,7 @@ size_t	 strlen(const char *s);
 /*@
   requires valid_string(src);
   requires valid_string(dst);
-  requires \valid_range(dst, 0, strlen(dst) + n);
-  requires \valid_range(dst, 0, strlen(dst) + strlen(src));
+  requires \valid_range(dst, 0, strlen(dst) + minimum(n, strlen(src)) + 1);
   requires disjoint_strings(src, dst);
   requires disjoint_strings_len(dst, src, strlen(dst) + strlen(src) + 1);
   requires disjoint_strings_len(dst, src, strlen(dst) + n + 1);
@@ -103,14 +102,14 @@ size_t	 strlen(const char *s);
 	  assumes n == 0;
 	  assigns \nothing;
   behavior b2:
-      assumes n > 0 && strlen(src) <= n - 1;
+      assumes n > 0 && strlen(src) <= n;
       assigns dst[..];
 	  ensures strlen(dst) == strlen{Old}(dst) + strlen(src);
 	  ensures \forall integer k; 0 <= k < strlen{Old}(dst) ==> dst[k] == \old(dst[k]);
 	  ensures \forall integer k; 0 <= k < strlen(src) ==>
 			dst[k + strlen{Old}(dst)] == src[k];
   behavior b3:
-      assumes n > 0  && strlen(src) > n - 1;
+      assumes n > 0  && strlen(src) > n;
       assigns dst[..];
 	  ensures strlen(dst) == strlen{Old}(dst) + n;
 	  ensures \forall integer k; 0 <= k < strlen{Old}(dst) ==> dst[k] == \old(dst[k]);
@@ -179,17 +178,19 @@ char	*strrchr(const char *s, int c);
     assumes strlen(find) == 0;
     ensures \result == s;
   behavior b2:
-    assumes strlen(s) == 0;
+    assumes strlen(s) == 0 || strlen(s) < strlen(find);
     assumes strlen(find) > 0;
     ensures \result == \null;
   behavior b3:
+    assumes strlen(s) > 0;
+    assumes strlen(find) > 0;
+    assumes \forall integer i; 0 <= i < strlen(s) && s[i] != *find;
+    ensures \result == \null;
+  behavior b4:
     assumes strlen(s) >= strlen(find) > 0;
     assumes \exists integer i; 0 <= i <= (strlen(s) - strlen(find)) && contains_string_at_i(s, find, i) &&
                \forall integer j; 0 <= j < i ==> !contains_string_at_i(s, find, j);
     ensures contains_string_at_i(\result, find, 0);
-  behavior b4:
-    assumes \forall integer i; 0 <= i < strlen(s) && s[i] != *find;
-    ensures \result == \null;
   behavior b5:
     assumes strlen(s) >= strlen(find) && strlen(find) > 0;
     ensures \forall integer i; 0 <= i < strlen(s) && !contains_string_at_i(s, find, i) ==> \result == \null;

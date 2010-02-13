@@ -38,14 +38,13 @@
  * are written at dst (at most n+1 bytes being appended).  Return dst.
  */
 
-// Proven by Z3 (b1: 5/5, b2: 12/13, b3: 12/13, Default behavior: 74/79 {all asserts, 1 proved by simplify}.
-// safety: 12/14 (first loop safety ? and the assertions about p after first loop?).
+// Proven by Z3 (b1: 5/5, b2: 12/13, b3: 12/13, Default behavior: 78/83 {1 pli for valid d, rest asserts, 1 proved by simplify}.
+// safety: 11/14 (d safety, first loop safety ? and the assertions about p after first loop?).
 // man params don't match.
 /*@
   requires valid_string(src);
   requires valid_string(dst);
-  requires \valid_range(dst, 0, strlen(dst) + n);
-  requires \valid_range(dst, 0, strlen(dst) + strlen(src));
+  requires \valid_range(dst, 0, strlen(dst) + minimum(n, strlen(src)) + 1);
   requires disjoint_strings(src, dst);
   requires disjoint_strings_len(dst, src, strlen(dst) + strlen(src) + 1);
   requires disjoint_strings_len(dst, src, strlen(dst) + n + 1);
@@ -54,14 +53,14 @@
 	  assumes n == 0;
 	  assigns \nothing;
   behavior b2:
-      assumes n > 0 && strlen(src) <= n - 1;
+      assumes n > 0 && strlen(src) <= n;
       assigns dst[..];
 	  ensures strlen(dst) == strlen{Old}(dst) + strlen(src);
 	  ensures \forall integer k; 0 <= k < strlen{Old}(dst) ==> dst[k] == \old(dst[k]);
 	  ensures \forall integer k; 0 <= k < strlen(src) ==>
 			dst[k + strlen{Old}(dst)] == src[k];
   behavior b3:
-      assumes n > 0  && strlen(src) > n - 1;
+      assumes n > 0  && strlen(src) > n;
       assigns dst[..];
 	  ensures strlen(dst) == strlen{Old}(dst) + n;
 	  ensures \forall integer k; 0 <= k < strlen{Old}(dst) ==> dst[k] == \old(dst[k]);
@@ -80,7 +79,7 @@ strncat(char *dst, const char *src, size_t n)
 		   loop invariant \valid_range(dst, 0, strlen{Pre}(dst));
 		   loop invariant 0 <= (d - dst) <= strlen{Pre}(dst);
 		   loop invariant \forall integer i; 0 <= i < (d-dst) ==> dst[i] != 0;
-		   loop invariant \forall integer i; (d-dst) <= i <= strlen{Pre}(dst) ==> dst[i] == \at(dst[i], Pre);
+		   loop invariant \forall integer i; 0 <= i <= strlen{Pre}(dst) ==> dst[i] == \at(dst[i], Pre);
 		   loop invariant \forall integer i; 0 <= i <= strlen(src) ==> src[i] == \at(src[i], Pre);
 		 */
 		while (*d != 0)
@@ -88,20 +87,21 @@ strncat(char *dst, const char *src, size_t n)
 		//@ assert *d == 0;
 		//@ assert d-dst == strlen{Pre}(dst);
 		//@ assert d == dst + strlen{Pre}(dst);
-		//@ assert \valid_range(d, 0, \at(n, Pre));
+		//@ assert \valid_range(d, 0, minimum(n, strlen(src)) + 1);
 
 		/*@ loop assigns d, s, n, dst[..];
 		    loop invariant \valid(d);
 		    loop invariant (s-src) <= strlen(src) ==> \valid(s);
 		    loop invariant \base_addr(d) == \base_addr(dst);
 		    loop invariant \base_addr(s) == \base_addr(src);
+		    loop invariant \valid_range(dst, 0, strlen{Pre}(dst) + minimum(\at(n, Pre), strlen(src)) + 1);
 		    loop invariant \at(n, Pre) >= n > 0;
 
-			loop invariant \at(n, Pre) - 1 >= strlen(src) ==> 0 <= (s-src) <= strlen(src);
-			loop invariant \at(n, Pre) - 1 < strlen(src) ==> 0 <= (s-src) <= \at(n, Pre) < strlen(src) + 1;
+			loop invariant \at(n, Pre) >= strlen(src) ==> 0 <= (s-src) <= strlen(src);
+			loop invariant \at(n, Pre) < strlen(src) ==> 0 <= (s-src) <= \at(n, Pre) < strlen(src);
 
-			loop invariant \at(n, Pre) - 1 >= strlen(src) ==> strlen{Pre}(dst) <= (d-dst) <= strlen{Pre}(dst) + strlen(src) < strlen{Pre}(dst) + \at(n, Pre);
-		    loop invariant \at(n, Pre) - 1 < strlen(src)  ==> strlen{Pre}(dst) <= (d-dst) <= strlen{Pre}(dst) + \at(n, Pre);
+			loop invariant \at(n, Pre) >= strlen(src) ==> strlen{Pre}(dst) <= (d-dst) <= strlen{Pre}(dst) + strlen(src) <= strlen{Pre}(dst) + \at(n, Pre);
+		    loop invariant \at(n, Pre) < strlen(src)  ==> strlen{Pre}(dst) <= (d-dst) <= strlen{Pre}(dst) + \at(n, Pre) < strlen{Pre}(dst) + strlen(src);
 
 		    loop invariant (s-src) <= strlen(src) ==> d - dst - strlen{Pre}(dst) ==  (s - src);
 		    loop invariant d - dst - strlen{Pre}(dst) == (\at(n, Pre) - n);
@@ -120,18 +120,18 @@ strncat(char *dst, const char *src, size_t n)
 		*d = 0;
 		//@ assert dst[d-dst] == 0;
 
-		//@ assert \at(n, Pre) - 1 > strlen(src) ==> *(s-1) == 0;
-		//@ assert \at(n, Pre) - 1 > strlen(src) ==> strlen(src) == s-src -1;
-		//@ assert \at(n, Pre) - 1 > strlen(src) ==> strlen(dst) == strlen{Pre}(dst) + s-src -1;
-		//@ assert \at(n, Pre) - 1 > strlen(src) ==> strlen(dst) == strlen{Pre}(dst) + strlen(src);
+		//@ assert \at(n, Pre) > strlen(src) ==> *(s-1) == 0;
+		//@ assert \at(n, Pre) > strlen(src) ==> strlen(src) == s-src -1;
+		//@ assert \at(n, Pre) > strlen(src) ==> strlen(dst) == strlen{Pre}(dst) + s-src -1;
+		//@ assert \at(n, Pre) > strlen(src) ==> strlen(dst) == strlen{Pre}(dst) + strlen(src);
 
-		//@ assert \at(n, Pre) - 1 < strlen(src) ==> dst[strlen{Pre}(dst) + \at(n, Pre)] == 0;
-		//@ assert \at(n, Pre) - 1 < strlen(src) ==> d-dst == (strlen{Pre}(dst) + \at(n, Pre)) && *d == 0;
-		//@ assert \at(n, Pre) - 1 < strlen(src) ==> strlen(dst) == strlen{Pre}(dst) + \at(n, Pre);
+		//@ assert \at(n, Pre) < strlen(src) ==> dst[strlen{Pre}(dst) + \at(n, Pre)] == 0;
+		//@ assert \at(n, Pre) < strlen(src) ==> d-dst == (strlen{Pre}(dst) + \at(n, Pre)) && *d == 0;
+		//@ assert \at(n, Pre) < strlen(src) ==> strlen(dst) == strlen{Pre}(dst) + \at(n, Pre);
 
-		//@ assert \at(n, Pre) - 1 == strlen(src) ==> dst[strlen{Pre}(dst) + \at(n, Pre) - 1] == 0;
-		//@ assert \at(n, Pre) - 1 == strlen(src) ==> d-dst == (strlen{Pre}(dst) + \at(n, Pre) - 1) && *d == 0;
-		//@ assert \at(n, Pre) - 1 == strlen(src) ==> strlen(dst) == strlen{Pre}(dst) + \at(n, Pre) - 1;
+		//@ assert \at(n, Pre) == strlen(src) ==> dst[strlen{Pre}(dst) + \at(n, Pre)] == 0;
+		//@ assert \at(n, Pre) == strlen(src) ==> d-dst == (strlen{Pre}(dst) + \at(n, Pre)) && *d == 0;
+		//@ assert \at(n, Pre) == strlen(src) ==> strlen(dst) == strlen{Pre}(dst) + \at(n, Pre);
 	}
 	return (dst);
 }
