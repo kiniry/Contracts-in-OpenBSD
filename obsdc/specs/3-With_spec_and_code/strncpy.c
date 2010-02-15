@@ -43,7 +43,7 @@
  * Return dst.
  */
 
-// Proven by Z3 (b1: 6/6, b2: 9/9, b3: 11/12, default: 86/88 -> missing 2 POs proved by Simplify, Safety: 14/14.
+// Proven by Z3 (b1: 6/6, b2: 9/9, b3: 12/12, b4: 9/9 default: 89/92 (1 missing pli PO proved by Simplify, 1 missing assert proven by alt-ergo, 1 pli)Safety: 14/14.
 
 //man: what happens if dst is shorter?
 //param n different in man
@@ -57,14 +57,18 @@
 		assumes n == 0;
 		assigns \nothing;
 	behavior b2:
-		assumes n > 0 && strlen(src) >= n;
+		assumes n > 0 && strlen(src) > n;
 		assigns dst[..];
-		ensures \forall integer i; 0 <= i < n ==> dst[i] == src[i];
+		ensures \forall integer i; 0 <= i < n - 1 ==> dst[i] == src[i];
 	behavior b3:
 		assumes n > 0 && strlen(src) < n;
 		assigns dst[0..];
+		ensures \forall integer i; 0 <= i <= strlen(src) ==> dst[i] == src[i];
+		ensures \forall integer i; strlen(src) < i < n ==> dst[i] == 0;
+	behavior b4:
+		assumes n > 0 && strlen(src) == n;
+		assigns dst[0..];
 		ensures \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
-		ensures \forall integer i; strlen(src) <= i < n ==> dst[i] == 0;
  */
 char *
 strncpy(char *dst, const char *src, size_t n)
@@ -96,6 +100,10 @@ strncpy(char *dst, const char *src, size_t n)
 				/* NUL pad the remaining n-1 bytes */
 				//@ ghost char *p = d;
 				//@ ghost size_t n2 = n;
+				//@ assert *(p-1) == 0;
+				//@ assert strlen(src) == p - dst - 1;
+				//@ assert dst[strlen(src)] == 0;
+				//@ assert \forall integer i; 0 <= i < (p-dst) ==> dst[i] == src[i];
 				/*@ loop assigns d, n, dst[p-dst..];
 				    loop invariant strlen(src) < \at(n, Pre) ==> \valid(d);
 					loop invariant \base_addr(d) == \base_addr(dst);
@@ -106,7 +114,7 @@ strncpy(char *dst, const char *src, size_t n)
 					loop invariant 0 <= d-dst <= \at(n, Pre);
 					loop invariant \forall integer k; (p-dst) <= k < (d-dst) ==> dst[k] == 0;
 					loop invariant \forall integer k; 0 <= k <= strlen(src) ==> src[k] == \at(src[k], Pre);
-					loop invariant \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
+					loop invariant \forall integer i; 0 <= i < (p-dst) ==> dst[i] == src[i];
 				*/
 				while (--n != 0)
 					*d++ = 0;

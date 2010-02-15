@@ -140,14 +140,18 @@ int	 strncmp(const char *s1, const char *s2, size_t n);
 		assumes n == 0;
 		assigns \nothing;
 	behavior b2:
-		assumes n > 0 && strlen(src) >= n;
+		assumes n > 0 && strlen(src) > n;
 		assigns dst[..];
-		ensures \forall integer i; 0 <= i < n ==> dst[i] == src[i];
+		ensures \forall integer i; 0 <= i < n - 1 ==> dst[i] == src[i];
 	behavior b3:
 		assumes n > 0 && strlen(src) < n;
 		assigns dst[0..];
+		ensures \forall integer i; 0 <= i <= strlen(src) ==> dst[i] == src[i];
+		ensures \forall integer i; strlen(src) < i < n ==> dst[i] == 0;
+	behavior b4:
+		assumes n > 0 && strlen(src) == n;
+		assigns dst[0..];
 		ensures \forall integer i; 0 <= i < strlen(src) ==> dst[i] == src[i];
-		ensures \forall integer i; strlen(src) <= i < n ==> dst[i] == 0;
  */
 char	*strncpy(char *dst, const char *src, size_t n)
 		__attribute__ ((__bounded__(__string__,1,3)));
