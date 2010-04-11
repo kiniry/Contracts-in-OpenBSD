@@ -38,8 +38,7 @@
  * are written at dst (at most n+1 bytes being appended).  Return dst.
  */
 
-// Proven by Z3 (b1: 5/5, b2: 12/13, b3: 12/13, Default behavior: 78/83 {1 pli for valid d, rest asserts, 1 proved by simplify}.
-// safety: 11/14 (d safety, first loop safety ? and the assertions about p after first loop?).
+// Proven by Z3 (b1: 5/5, b2: 12/13, b3: 11/13, Default behavior: 97/100 {3 pli, 1 proved by simplify}, safety: 13/14 (d safety).
 // man params don't match.
 /*@
   requires valid_string(src);
@@ -73,14 +72,14 @@ strncat(char *dst, const char *src, size_t n)
 	if (n != 0) {
 		char *d = dst;
 		const char *s = src;
-		/* loop assigns d;
-		   loop invariant \base_addr(d) == \base_addr(dst);
-		   loop invariant \valid(d);
-		   loop invariant \valid_range(dst, 0, strlen{Pre}(dst));
-		   loop invariant 0 <= (d - dst) <= strlen{Pre}(dst);
-		   loop invariant \forall integer i; 0 <= i < (d-dst) ==> dst[i] != 0;
-		   loop invariant \forall integer i; 0 <= i <= strlen{Pre}(dst) ==> dst[i] == \at(dst[i], Pre);
-		   loop invariant \forall integer i; 0 <= i <= strlen(src) ==> src[i] == \at(src[i], Pre);
+		/*@ loop assigns d;
+		    loop invariant \base_addr(d) == \base_addr(dst);
+		    loop invariant \valid(d);
+		    loop invariant \valid_range(dst, 0, strlen{Pre}(dst));
+		    loop invariant 0 <= (d - dst) <= strlen{Pre}(dst);
+		    loop invariant \forall integer i; 0 <= i < (d-dst) ==> dst[i] != 0;
+		    loop invariant \forall integer i; 0 <= i <= strlen{Pre}(dst) ==> dst[i] == \at(dst[i], Pre);
+		    loop invariant \forall integer i; 0 <= i <= strlen(src) ==> src[i] == \at(src[i], Pre);
 		 */
 		while (*d != 0)
 			d++;
